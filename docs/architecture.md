@@ -1,6 +1,42 @@
 # TailorMode 3D Body Scanning Platform Architecture
 
-## Overview
+## One-Page PRD
+
+### Problem Statement
+Remote tailoring currently depends on manual tape-measure walkthroughs that are error prone, uncomfortable for clients, and lead to costly remakes. TailorMode must replace this experience with a private, iPhone-first 3D capture flow that produces metrically accurate, repeatable measurements without exposing raw imagery to third parties.
+
+### Primary Users & Stakeholders
+- **Tailors and ateliers** who need precise body measurements, historical comparisons, and auditability.
+- **End clients** who perform self-capture on iPhone or web/Android fallback flows and demand privacy guarantees.
+- **Operations & compliance teams** responsible for NDPA-aligned processing, retention, and audit logging.
+- **Product & support teams** who monitor capture quality, manage subscriptions, and troubleshoot scans.
+
+### Core Use Scenarios
+1. Tailor invites a client via secure capture link; the client completes guided scanning on a LiDAR-enabled iPhone and reviews QC feedback in real time.
+2. Client with a non-LiDAR phone completes RGB capture using a printed scale marker; reconstruction occurs in a regional backend with encrypted uploads.
+3. Tailor opens the web dashboard to inspect the 3D mesh, request custom circumferences using natural language, and export a measurement preset to a CAD workflow.
+4. Support agent audits a measurement dispute by reviewing QC logs, measurement history, and subscription usage without accessing raw frames.
+
+### Acceptance Criteria
+- ≥ 90% of LiDAR captures pass automated QC on the first attempt with all raw frames deleted after reconstruction.
+- Median circumference error ≤ 15 mm compared with in-person tape measurements under validated capture conditions.
+- Tailor dashboard renders meshes, measurements, and AI assistant responses within 2 seconds at the 95th percentile.
+- All uploads, mesh storage, and analytics respect regional residency (e.g., AWS Cape Town or GCP Johannesburg) and are covered by consent and audit logs.
+- Subscription billing enforces seat limits, usage metering, and proration, with automated alerts on anomalies.
+
+### Success Metrics
+- ≥ 90% first-attempt capture pass rate on supported iPhones.
+- ≥ 30% reduction in remake or alteration incidents for pilot tailors.
+- < 3 minutes end-to-end latency (capture to usable mesh) on LiDAR iPhones.
+- ≥ 95% of measurement assistant requests auto-resolved without manual intervention.
+
+### Risks & Mitigations
+- **Loose clothing and hair occlusions** → enforce attire guidance, include pose checks, and trigger targeted “fill gaps” capture loops.
+- **Scale ambiguity on RGB-only captures** → require printed scale markers or verified height calibration with confidence indicators.
+- **Landmark drift on difficult anatomy** → normalize to SMPL/SMPL-X A-pose, run statistical plausibility checks, and allow manual correction in the dashboard.
+- **Network unreliability** → provide offline capture with resumable background uploads and automatic retries.
+
+## Technical Overview
 TailorMode enables tailors to receive metrically accurate body measurements from clients who capture their own scans on iPhone devices. The solution prioritizes on-device processing, privacy-preserving data flows, and extensible measurement tooling for tailors. Key pillars include:
 
 - **iPhone-first capture** leveraging LiDAR, Object Capture, TrueDepth, and Apple Neural Engine hardware.
