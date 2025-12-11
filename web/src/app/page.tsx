@@ -39,6 +39,7 @@ interface AnalysisResult {
   bodyType: string;
   posture: string;
   recommendations: string[];
+  isDemo?: boolean;
 }
 
 type AppState = "home" | "camera" | "manual" | "analyzing" | "results";
@@ -349,7 +350,9 @@ export default function Home() {
                 </motion.button>
 
                 <div className="text-center">
-                  <h1 className="text-base font-medium text-[#faf9f7]">Your Measurements</h1>
+                  <h1 className="text-base font-medium text-[#faf9f7]">
+                    {analysisResult.isDemo ? "Demo Results" : "Your Measurements"}
+                  </h1>
                   <p className="text-[#57534e] text-xs">{analysisResult.measurements.length} measurements</p>
                 </div>
 
@@ -387,6 +390,26 @@ export default function Home() {
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                 className="flex-1 px-4 pb-4 space-y-4 -mt-8 relative z-20"
               >
+                {analysisResult.isDemo && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-[#c4a77d]/10 border border-[#c4a77d]/30 rounded-xl px-4 py-3"
+                  >
+                    <div className="flex items-start gap-3">
+                      <svg className="w-5 h-5 text-[#c4a77d] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                      </svg>
+                      <div>
+                        <p className="text-[#c4a77d] text-sm font-medium">Demo Mode</p>
+                        <p className="text-[#a8a29e] text-xs mt-0.5">
+                          These are simulated measurements. For accurate results, try again with better lighting or use manual entry.
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+                
                 <MeasurementProgress
                   measurements={analysisResult.measurements}
                   activeMeasurement={activeMeasurement}

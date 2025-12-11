@@ -1,5 +1,71 @@
 import { NextRequest, NextResponse } from "next/server";
-import { analyzeBodyImage } from "@/lib/gemini";
+import { analyzeBodyImage, MeasurementResult } from "@/lib/gemini";
+
+function generateDemoMeasurements(): MeasurementResult & { isDemo: boolean } {
+  const baseChest = 90 + Math.floor(Math.random() * 20);
+  const baseWaist = baseChest - 10 - Math.floor(Math.random() * 8);
+  const baseHips = baseChest + Math.floor(Math.random() * 10);
+  
+  return {
+    isDemo: true,
+    measurements: [
+      {
+        name: "Chest",
+        value: baseChest,
+        unit: "cm",
+        confidence: 0.0,
+        landmark_start: "left chest",
+        landmark_end: "right chest",
+      },
+      {
+        name: "Waist",
+        value: baseWaist,
+        unit: "cm",
+        confidence: 0.0,
+        landmark_start: "left waist",
+        landmark_end: "right waist",
+      },
+      {
+        name: "Hips",
+        value: baseHips,
+        unit: "cm",
+        confidence: 0.0,
+        landmark_start: "left hip",
+        landmark_end: "right hip",
+      },
+      {
+        name: "Shoulder Width",
+        value: 42 + Math.floor(Math.random() * 8),
+        unit: "cm",
+        confidence: 0.0,
+        landmark_start: "left shoulder",
+        landmark_end: "right shoulder",
+      },
+      {
+        name: "Arm Length",
+        value: 58 + Math.floor(Math.random() * 10),
+        unit: "cm",
+        confidence: 0.0,
+        landmark_start: "shoulder",
+        landmark_end: "wrist",
+      },
+      {
+        name: "Inseam",
+        value: 76 + Math.floor(Math.random() * 10),
+        unit: "cm",
+        confidence: 0.0,
+        landmark_start: "crotch",
+        landmark_end: "floor",
+      },
+    ],
+    bodyType: "Demo",
+    posture: "Demo mode - simulated data",
+    recommendations: [
+      "This is demo data - not from your actual photo",
+      "For accurate measurements, use manual entry or try again with better lighting",
+    ],
+  };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,22 +79,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await analyzeBodyImage(image);
+    try {
+      const result = await analyzeBodyImage(image);
+      
+      if (!result.measurements || result.measurements.length === 0) {
+        console.log("AI returned no measurements, using demo data");
+        return NextResponse.json(generateDemoMeasurements());
+      }
 
-    if (!result.measurements || result.measurements.length === 0) {
-      return NextResponse.json(
-        { error: "Could not extract measurements from image. Please try again with a clearer photo." },
-        { status: 422 }
-      );
+      return NextResponse.json({ ...result, isDemo: false });
+    } catch (aiError: any) {
+      console.error("AI analysis failed:", aiError.message);
+      return NextResponse.json(generateDemoMeasurements());
     }
-
-    return NextResponse.json(result);
   } catch (error: any) {
-    console.error("Analysis error:", error);
-    const errorMessage = error.message || "Failed to analyze image";
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    console.error("Request error:", error);
+    return NextResponse.json(generateDemoMeasurements());
   }
 }
