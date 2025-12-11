@@ -21,6 +21,10 @@ const MeasurementProgress = dynamic(() => import("@/components/MeasurementProgre
   ssr: false,
 });
 
+const ManualMeasurement = dynamic(() => import("@/components/ManualMeasurement"), {
+  ssr: false,
+});
+
 interface Measurement {
   name: string;
   value: number;
@@ -37,7 +41,7 @@ interface AnalysisResult {
   recommendations: string[];
 }
 
-type AppState = "home" | "camera" | "analyzing" | "results";
+type AppState = "home" | "camera" | "manual" | "analyzing" | "results";
 
 export default function Home() {
   const [appState, setAppState] = useState<AppState>("home");
@@ -74,6 +78,32 @@ export default function Home() {
     } catch (err: any) {
       setError(err.message || "Failed to analyze image");
       setAppState("home");
+    }
+  }, []);
+
+  const handleManualComplete = useCallback((measurements: Record<string, number>) => {
+    const measurementList: Measurement[] = Object.entries(measurements).map(([key, value]) => ({
+      name: key.charAt(0).toUpperCase() + key.slice(1),
+      value,
+      unit: "cm",
+      confidence: 100,
+      landmark_start: key,
+      landmark_end: key,
+    }));
+
+    setAnalysisResult({
+      measurements: measurementList,
+      bodyType: "Custom",
+      posture: "Manual Entry",
+      recommendations: [
+        "Measurements entered manually for maximum accuracy",
+        "Consider using a tailor for professional verification"
+      ],
+    });
+    setAppState("results");
+    
+    if (measurementList.length > 0) {
+      setActiveMeasurement(0);
     }
   }, []);
 
@@ -152,7 +182,7 @@ export default function Home() {
                   Precision Measurements
                 </h2>
                 <p className="text-[#78716c] text-sm leading-relaxed">
-                  AI-powered body scanning with your camera. Accurate results in seconds.
+                  AI-powered body scanning or manual entry. Your measurements, your way.
                 </p>
               </motion.div>
 
@@ -166,21 +196,37 @@ export default function Home() {
                 </motion.div>
               )}
 
-              <motion.button
+              <motion.div
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setAppState("camera")}
-                className="btn-primary w-full max-w-sm py-4 rounded-xl font-medium text-base flex items-center justify-center gap-3"
+                className="w-full max-w-sm space-y-3"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
-                </svg>
-                Begin Scan
-              </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setAppState("camera")}
+                  className="btn-primary w-full py-4 rounded-xl font-medium text-base flex items-center justify-center gap-3"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                  </svg>
+                  Scan with Camera
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setAppState("manual")}
+                  className="w-full py-4 rounded-xl font-medium text-base flex items-center justify-center gap-3 bg-[#1f1c18] border border-[#3d3630] text-[#e8e0d5] hover:border-[#c4a77d]/50 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                  </svg>
+                  Enter Manually
+                </motion.button>
+              </motion.div>
             </div>
 
             <motion.div 
@@ -194,7 +240,7 @@ export default function Home() {
                   {[
                     { label: "Capture", desc: "Quick scan", icon: "M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" },
                     { label: "Analyze", desc: "AI powered", icon: "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" },
-                    { label: "Results", desc: "3D preview", icon: "M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25" },
+                    { label: "Results", desc: "Instant", icon: "M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
                   ].map((feature) => (
                     <div key={feature.label} className="flex-1 text-center">
                       <div className="w-10 h-10 mx-auto mb-2 rounded-xl bg-[#1f1c18] flex items-center justify-center">
@@ -215,6 +261,13 @@ export default function Home() {
         {appState === "camera" && (
           <CameraCapture
             onCapture={handleCapture}
+            onClose={() => setAppState("home")}
+          />
+        )}
+
+        {appState === "manual" && (
+          <ManualMeasurement
+            onComplete={handleManualComplete}
             onClose={() => setAppState("home")}
           />
         )}
@@ -296,8 +349,8 @@ export default function Home() {
                 </motion.button>
 
                 <div className="text-center">
-                  <h1 className="text-base font-medium text-[#faf9f7]">Scan Results</h1>
-                  <p className="text-[#57534e] text-xs">{analysisResult.bodyType} build</p>
+                  <h1 className="text-base font-medium text-[#faf9f7]">Your Measurements</h1>
+                  <p className="text-[#57534e] text-xs">{analysisResult.measurements.length} measurements</p>
                 </div>
 
                 <motion.button
@@ -346,7 +399,7 @@ export default function Home() {
                     animate={{ opacity: 1, y: 0 }}
                     className="surface-elevated rounded-2xl p-4"
                   >
-                    <h3 className="text-[#faf9f7] font-medium mb-3 text-sm">Analysis Summary</h3>
+                    <h3 className="text-[#faf9f7] font-medium mb-3 text-sm">Summary</h3>
                     <div className="space-y-2">
                       {analysisResult.recommendations.slice(0, 2).map((rec, index) => (
                         <p key={index} className="text-[#78716c] text-xs leading-relaxed flex items-start gap-2">
