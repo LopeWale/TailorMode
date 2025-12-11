@@ -8,7 +8,7 @@ const HumanModel = dynamic(() => import("@/components/HumanModel"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center">
-      <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+      <div className="w-10 h-10 border-2 border-[#c4a77d] border-t-transparent rounded-full animate-spin" />
     </div>
   ),
 });
@@ -59,11 +59,12 @@ export default function Home() {
         body: JSON.stringify({ image: imageData }),
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error("Analysis failed");
+        throw new Error(result.error || "Analysis failed");
       }
 
-      const result = await response.json();
       setAnalysisResult(result);
       setAppState("results");
       
@@ -82,7 +83,7 @@ export default function Home() {
     if (analysisResult && index < analysisResult.measurements.length - 1) {
       setTimeout(() => {
         setActiveMeasurement(index + 1);
-      }, 500);
+      }, 300);
     } else {
       setActiveMeasurement(null);
     }
@@ -98,7 +99,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="min-h-screen flex flex-col">
+    <main className="min-h-screen min-h-dvh flex flex-col bg-[#0f0e0c]">
       <AnimatePresence mode="wait">
         {appState === "home" && (
           <motion.div
@@ -108,53 +109,50 @@ export default function Home() {
             exit={{ opacity: 0 }}
             className="flex-1 flex flex-col"
           >
-            <header className="safe-area-top">
-              <div className="flex items-center justify-between p-6">
+            <header className="safe-area-top relative z-10">
+              <div className="flex items-center justify-between px-6 py-5">
                 <div>
-                  <h1 className="text-2xl font-bold gradient-text">TailorMode</h1>
-                  <p className="text-white/60 text-sm">3D Body Measurement</p>
+                  <h1 className="text-xl font-semibold tracking-tight text-[#faf9f7]">
+                    Tailor<span className="text-[#c4a77d]">Mode</span>
+                  </h1>
+                  <p className="text-xs text-[#78716c] mt-0.5">Body Measurement</p>
                 </div>
-                <div className="w-10 h-10 rounded-full glass flex items-center justify-center">
-                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                <button className="w-10 h-10 rounded-full surface-glass flex items-center justify-center">
+                  <svg className="w-5 h-5 text-[#a8a29e]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                   </svg>
-                </div>
+                </button>
               </div>
             </header>
 
-            <div className="flex-1 flex flex-col items-center justify-center p-6 -mt-16">
+            <div className="flex-1 flex flex-col items-center justify-center px-6 -mt-10">
               <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
+                initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.2, type: "spring" }}
-                className="relative w-64 h-80 mb-8"
+                transition={{ delay: 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                className="relative w-full max-w-[280px] aspect-[3/4] mb-6"
               >
+                <div className="absolute inset-0 bg-gradient-radial from-[#c4a77d]/5 via-transparent to-transparent rounded-full blur-3xl" />
                 <Suspense fallback={
                   <div className="w-full h-full flex items-center justify-center">
-                    <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-10 h-10 border-2 border-[#c4a77d] border-t-transparent rounded-full animate-spin" />
                   </div>
                 }>
-                  <HumanModel measurements={[]} activeMeasurement={null} />
+                  <HumanModel measurements={[]} activeMeasurement={null} isInteractive={true} />
                 </Suspense>
-                
-                <motion.div
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ repeat: Infinity, duration: 3 }}
-                  className="absolute inset-0 rounded-full bg-primary-500/10 blur-3xl -z-10"
-                />
               </motion.div>
 
               <motion.div
-                initial={{ y: 20, opacity: 0 }}
+                initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="text-center mb-8"
+                transition={{ delay: 0.3, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                className="text-center mb-8 max-w-sm"
               >
-                <h2 className="text-3xl font-bold text-white mb-3">
+                <h2 className="text-2xl sm:text-3xl font-semibold text-[#faf9f7] mb-3 tracking-tight">
                   Precision Measurements
                 </h2>
-                <p className="text-white/60 max-w-xs mx-auto">
-                  Use your camera to capture body measurements with AI-powered accuracy
+                <p className="text-[#78716c] text-sm leading-relaxed">
+                  AI-powered body scanning with your camera. Accurate results in seconds.
                 </p>
               </motion.div>
 
@@ -162,53 +160,55 @@ export default function Home() {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mb-4 px-4 py-2 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm"
+                  className="mb-6 px-4 py-3 surface-glass rounded-xl border border-red-500/20 max-w-sm w-full"
                 >
-                  {error}
+                  <p className="text-red-400 text-sm text-center">{error}</p>
                 </motion.div>
               )}
 
               <motion.button
-                initial={{ y: 20, opacity: 0 }}
+                initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.6 }}
+                transition={{ delay: 0.5, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setAppState("camera")}
-                className="relative group w-full max-w-xs"
+                className="btn-primary w-full max-w-sm py-4 rounded-xl font-medium text-base flex items-center justify-center gap-3"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-accent-500 rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
-                <div className="relative flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-primary-500 to-accent-500 rounded-2xl text-white font-semibold text-lg">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  Start Capture
-                </div>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                </svg>
+                Begin Scan
               </motion.button>
             </div>
 
-            <div className="safe-area-bottom p-6">
-              <div className="grid grid-cols-3 gap-4">
-                {[
-                  { icon: "📸", label: "Capture", desc: "Take a photo" },
-                  { icon: "🤖", label: "AI Analysis", desc: "Gemini powered" },
-                  { icon: "📐", label: "3D Preview", desc: "Visual results" },
-                ].map((feature, index) => (
-                  <motion.div
-                    key={feature.label}
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.8 + index * 0.1 }}
-                    className="glass rounded-xl p-3 text-center"
-                  >
-                    <div className="text-2xl mb-1">{feature.icon}</div>
-                    <div className="text-white text-xs font-medium">{feature.label}</div>
-                    <div className="text-white/40 text-[10px]">{feature.desc}</div>
-                  </motion.div>
-                ))}
+            <motion.div 
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.7, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              className="safe-area-bottom px-6 pb-4"
+            >
+              <div className="surface-elevated rounded-2xl p-4">
+                <div className="flex items-center gap-4">
+                  {[
+                    { label: "Capture", desc: "Quick scan", icon: "M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" },
+                    { label: "Analyze", desc: "AI powered", icon: "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" },
+                    { label: "Results", desc: "3D preview", icon: "M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25" },
+                  ].map((feature) => (
+                    <div key={feature.label} className="flex-1 text-center">
+                      <div className="w-10 h-10 mx-auto mb-2 rounded-xl bg-[#1f1c18] flex items-center justify-center">
+                        <svg className="w-5 h-5 text-[#c4a77d]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d={feature.icon} />
+                        </svg>
+                      </div>
+                      <p className="text-[#faf9f7] text-xs font-medium">{feature.label}</p>
+                      <p className="text-[#57534e] text-[10px]">{feature.desc}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         )}
 
@@ -225,55 +225,49 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex-1 flex flex-col items-center justify-center p-6"
+            className="flex-1 flex flex-col items-center justify-center p-6 bg-[#0f0e0c]"
           >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-              className="w-20 h-20 mb-8"
-            >
-              <svg viewBox="0 0 100 100" className="w-full h-full">
-                <defs>
-                  <linearGradient id="spinnerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#0ea5e9" />
-                    <stop offset="100%" stopColor="#d946ef" />
-                  </linearGradient>
-                </defs>
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="none"
-                  stroke="url(#spinnerGradient)"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  strokeDasharray="200"
-                  strokeDashoffset="50"
-                />
-              </svg>
-            </motion.div>
+            <div className="relative w-32 h-32 mb-10">
+              <div className="absolute inset-0 rounded-full border border-[#c4a77d]/20" />
+              <div className="absolute inset-2 rounded-full border border-[#c4a77d]/30" />
+              <div className="absolute inset-4 rounded-full border border-[#c4a77d]/40" />
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
+                className="absolute inset-0"
+              >
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-[#c4a77d]" />
+              </motion.div>
+              <motion.div
+                animate={{ rotate: -360 }}
+                transition={{ repeat: Infinity, duration: 5, ease: "linear" }}
+                className="absolute inset-4"
+              >
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#d4c4a8]" />
+              </motion.div>
+            </div>
 
-            <h2 className="text-2xl font-bold text-white mb-2">Analyzing Image</h2>
-            <p className="text-white/60 text-center">
-              AI is processing your body measurements...
+            <h2 className="text-xl font-semibold text-[#faf9f7] mb-2">Processing Scan</h2>
+            <p className="text-[#78716c] text-sm text-center max-w-xs">
+              Analyzing body structure and calculating measurements
             </p>
 
-            <div className="mt-8 space-y-2">
-              {["Detecting body landmarks", "Calculating proportions", "Generating measurements"].map(
+            <div className="mt-10 space-y-3 w-full max-w-xs">
+              {["Detecting landmarks", "Computing proportions", "Generating results"].map(
                 (step, index) => (
                   <motion.div
                     key={step}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.5 }}
-                    className="flex items-center gap-3 text-white/70"
+                    transition={{ delay: index * 0.4 }}
+                    className="flex items-center gap-3 surface-glass rounded-xl px-4 py-3"
                   >
                     <motion.div
                       animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ repeat: Infinity, duration: 1, delay: index * 0.3 }}
-                      className="w-2 h-2 rounded-full bg-primary-500"
+                      transition={{ repeat: Infinity, duration: 1.5, delay: index * 0.2 }}
+                      className="w-2 h-2 rounded-full bg-[#c4a77d]"
                     />
-                    {step}
+                    <span className="text-[#a8a29e] text-sm">{step}</span>
                   </motion.div>
                 )
               )}
@@ -287,39 +281,43 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex-1 flex flex-col"
+            className="flex-1 flex flex-col bg-[#0f0e0c]"
           >
-            <header className="safe-area-top">
-              <div className="flex items-center justify-between p-4">
+            <header className="safe-area-top relative z-10">
+              <div className="flex items-center justify-between px-4 py-4">
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={resetApp}
-                  className="w-10 h-10 rounded-full glass flex items-center justify-center"
+                  className="w-10 h-10 rounded-full surface-glass flex items-center justify-center"
                 >
-                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  <svg className="w-5 h-5 text-[#a8a29e]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                   </svg>
                 </motion.button>
 
-                <h1 className="text-lg font-semibold text-white">Measurement Results</h1>
+                <div className="text-center">
+                  <h1 className="text-base font-medium text-[#faf9f7]">Scan Results</h1>
+                  <p className="text-[#57534e] text-xs">{analysisResult.bodyType} build</p>
+                </div>
 
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setAppState("camera")}
-                  className="w-10 h-10 rounded-full glass flex items-center justify-center"
+                  className="w-10 h-10 rounded-full surface-glass flex items-center justify-center"
                 >
-                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  <svg className="w-5 h-5 text-[#a8a29e]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                   </svg>
                 </motion.button>
               </div>
             </header>
 
-            <div className="flex-1 relative">
-              <div className="h-[45vh] min-h-[300px]">
+            <div className="flex-1 flex flex-col">
+              <div className="h-[40vh] min-h-[280px] relative">
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0f0e0c] pointer-events-none z-10" />
                 <Suspense fallback={
                   <div className="w-full h-full flex items-center justify-center">
-                    <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-10 h-10 border-2 border-[#c4a77d] border-t-transparent rounded-full animate-spin" />
                   </div>
                 }>
                   <HumanModel
@@ -331,60 +329,51 @@ export default function Home() {
               </div>
 
               <motion.div
-                initial={{ y: 100 }}
+                initial={{ y: 60 }}
                 animate={{ y: 0 }}
-                className="bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f] to-transparent pt-8 pb-6 px-4 space-y-4"
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="flex-1 px-4 pb-4 space-y-4 -mt-8 relative z-20"
               >
-                <div className="flex items-center gap-4">
-                  <div className="glass rounded-xl px-4 py-2">
-                    <span className="text-white/60 text-xs">Body Type</span>
-                    <p className="text-white font-semibold">{analysisResult.bodyType}</p>
-                  </div>
-                  <div className="glass rounded-xl px-4 py-2 flex-1">
-                    <span className="text-white/60 text-xs">Posture</span>
-                    <p className="text-white font-semibold text-sm">{analysisResult.posture}</p>
-                  </div>
-                </div>
-
                 <MeasurementProgress
                   measurements={analysisResult.measurements}
                   activeMeasurement={activeMeasurement}
                   completedMeasurements={completedMeasurements}
                 />
 
-                {analysisResult.recommendations && analysisResult.recommendations.length > 0 && (
+                {completedMeasurements.length === analysisResult.measurements.length && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    className="glass rounded-2xl p-4"
+                    className="surface-elevated rounded-2xl p-4"
                   >
-                    <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
-                      <span className="text-lg">💡</span> Recommendations
-                    </h3>
-                    <ul className="space-y-1">
-                      {analysisResult.recommendations.map((rec, index) => (
-                        <li key={index} className="text-white/70 text-sm flex items-start gap-2">
-                          <span className="text-primary-400 mt-1">•</span>
+                    <h3 className="text-[#faf9f7] font-medium mb-3 text-sm">Analysis Summary</h3>
+                    <div className="space-y-2">
+                      {analysisResult.recommendations.slice(0, 2).map((rec, index) => (
+                        <p key={index} className="text-[#78716c] text-xs leading-relaxed flex items-start gap-2">
+                          <span className="text-[#c4a77d] mt-0.5">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </span>
                           {rec}
-                        </li>
+                        </p>
                       ))}
-                    </ul>
+                    </div>
                   </motion.div>
                 )}
               </motion.div>
             </div>
 
-            <div className="safe-area-bottom p-4">
+            <div className="safe-area-bottom px-4 pb-4">
               <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl text-white font-semibold flex items-center justify-center gap-2"
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                className="w-full py-4 btn-primary rounded-xl font-medium text-sm flex items-center justify-center gap-2"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                 </svg>
-                Save Measurements
+                Export Measurements
               </motion.button>
             </div>
           </motion.div>

@@ -92,5 +92,14 @@ Provide at least 8 key measurements for tailoring purposes.`,
     },
   });
 
-  return JSON.parse(response.text || "{}") as MeasurementResult;
+  const responseText = response.text;
+  if (!responseText) {
+    throw new Error("Empty response from AI model");
+  }
+
+  try {
+    return JSON.parse(responseText) as MeasurementResult;
+  } catch {
+    throw new Error("Invalid JSON response from AI model");
+  }
 }

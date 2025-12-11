@@ -96,7 +96,7 @@ export default function CameraCapture({ onCapture, onClose }: CameraCaptureProps
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black"
+      className="fixed inset-0 z-50 bg-[#0f0e0c]"
     >
       <div className="relative w-full h-full flex flex-col">
         <div className="absolute top-0 left-0 right-0 z-20 safe-area-top">
@@ -104,24 +104,24 @@ export default function CameraCapture({ onCapture, onClose }: CameraCaptureProps
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={onClose}
-              className="w-10 h-10 rounded-full glass flex items-center justify-center"
+              className="w-10 h-10 rounded-full surface-glass flex items-center justify-center"
             >
-              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg className="w-5 h-5 text-[#a8a29e]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </motion.button>
 
-            <div className="glass px-4 py-2 rounded-full">
-              <span className="text-white text-sm font-medium">Body Capture</span>
+            <div className="surface-glass px-4 py-2 rounded-full">
+              <span className="text-[#faf9f7] text-sm font-medium">Body Capture</span>
             </div>
 
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={switchCamera}
-              className="w-10 h-10 rounded-full glass flex items-center justify-center"
+              className="w-10 h-10 rounded-full surface-glass flex items-center justify-center"
             >
-              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <svg className="w-5 h-5 text-[#a8a29e]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
               </svg>
             </motion.button>
           </div>
@@ -131,17 +131,17 @@ export default function CameraCapture({ onCapture, onClose }: CameraCaptureProps
           {error ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center p-8">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#1f1c18] flex items-center justify-center">
+                  <svg className="w-8 h-8 text-[#78716c]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                   </svg>
                 </div>
-                <h3 className="text-white font-semibold text-lg mb-2">Camera Access Required</h3>
-                <p className="text-gray-400 text-sm mb-4">{error}</p>
+                <h3 className="text-[#faf9f7] font-semibold text-lg mb-2">Camera Access Required</h3>
+                <p className="text-[#78716c] text-sm mb-4">{error}</p>
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={startCamera}
-                  className="px-6 py-3 bg-primary-500 rounded-full text-white font-medium"
+                  className="px-6 py-3 btn-primary rounded-xl font-medium"
                 >
                   Try Again
                 </motion.button>
@@ -169,8 +169,8 @@ export default function CameraCapture({ onCapture, onClose }: CameraCaptureProps
                       <svg viewBox="0 0 200 320" className="w-full h-full">
                         <defs>
                           <linearGradient id="guideGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#0ea5e9" />
-                            <stop offset="100%" stopColor="#d946ef" />
+                            <stop offset="0%" stopColor="#c4a77d" />
+                            <stop offset="100%" stopColor="#9c8f78" />
                           </linearGradient>
                         </defs>
                         <ellipse cx="100" cy="35" rx="25" ry="30" fill="none" stroke="url(#guideGradient)" strokeWidth="2" strokeDasharray="8 4" className="animate-pulse" />
@@ -184,7 +184,7 @@ export default function CameraCapture({ onCapture, onClose }: CameraCaptureProps
                         transition={{ repeat: Infinity, duration: 2 }}
                         className="absolute -bottom-16 left-1/2 -translate-x-1/2 text-center"
                       >
-                        <p className="text-white text-sm font-medium glass px-4 py-2 rounded-full">
+                        <p className="text-[#faf9f7] text-sm font-medium surface-glass px-4 py-2 rounded-full">
                           Position yourself in the frame
                         </p>
                       </motion.div>
@@ -202,7 +202,7 @@ export default function CameraCapture({ onCapture, onClose }: CameraCaptureProps
                     exit={{ scale: 1.5, opacity: 0 }}
                     className="absolute inset-0 flex items-center justify-center"
                   >
-                    <span className="text-8xl font-bold text-white drop-shadow-2xl">
+                    <span className="text-8xl font-bold text-[#c4a77d] drop-shadow-2xl">
                       {countdown}
                     </span>
                   </motion.div>
@@ -216,8 +216,8 @@ export default function CameraCapture({ onCapture, onClose }: CameraCaptureProps
           <div className="flex flex-col items-center gap-4 p-6">
             {!error && (
               <>
-                <div className="flex items-center gap-2 text-white/70 text-sm">
-                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <div className="flex items-center gap-2 text-[#a8a29e] text-sm">
+                  <div className="w-2 h-2 rounded-full bg-[#9c8f78] animate-pulse" />
                   {isReady ? "Camera ready" : "Initializing..."}
                 </div>
 
@@ -225,13 +225,13 @@ export default function CameraCapture({ onCapture, onClose }: CameraCaptureProps
                   whileTap={{ scale: 0.9 }}
                   onClick={capturePhoto}
                   disabled={!isReady || countdown !== null}
-                  className="relative w-20 h-20 rounded-full bg-white disabled:opacity-50"
+                  className="relative w-20 h-20 rounded-full bg-[#faf9f7] disabled:opacity-50"
                 >
-                  <div className="absolute inset-1 rounded-full border-4 border-black/10" />
+                  <div className="absolute inset-1 rounded-full border-4 border-[#0f0e0c]" />
                   <motion.div
-                    animate={isReady ? { scale: [1, 1.1, 1] } : {}}
+                    animate={isReady ? { scale: [1, 1.05, 1] } : {}}
                     transition={{ repeat: Infinity, duration: 2 }}
-                    className="absolute inset-3 rounded-full bg-white shadow-lg"
+                    className="absolute inset-3 rounded-full bg-[#faf9f7] shadow-lg"
                   />
                 </motion.button>
               </>

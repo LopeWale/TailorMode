@@ -3,22 +3,31 @@ import { analyzeBodyImage } from "@/lib/gemini";
 
 export async function POST(request: NextRequest) {
   try {
-    const { image } = await request.json();
+    const body = await request.json();
+    const { image } = body;
 
-    if (!image) {
+    if (!image || typeof image !== "string") {
       return NextResponse.json(
-        { error: "No image provided" },
+        { error: "No valid image provided" },
         { status: 400 }
       );
     }
 
     const result = await analyzeBodyImage(image);
 
+    if (!result.measurements || result.measurements.length === 0) {
+      return NextResponse.json(
+        { error: "Could not extract measurements from image. Please try again with a clearer photo." },
+        { status: 422 }
+      );
+    }
+
     return NextResponse.json(result);
   } catch (error: any) {
     console.error("Analysis error:", error);
+    const errorMessage = error.message || "Failed to analyze image";
     return NextResponse.json(
-      { error: error.message || "Failed to analyze image" },
+      { error: errorMessage },
       { status: 500 }
     );
   }

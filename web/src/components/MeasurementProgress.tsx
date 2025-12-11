@@ -26,21 +26,21 @@ export default function MeasurementProgress({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass rounded-2xl p-4 space-y-4"
+      className="surface-glass rounded-2xl p-4 space-y-4"
     >
       <div className="flex items-center justify-between">
-        <h3 className="text-white font-semibold">Measurements</h3>
-        <span className="text-primary-400 text-sm font-medium">
+        <h3 className="text-[#faf9f7] font-semibold">Measurements</h3>
+        <span className="text-[#c4a77d] text-sm font-medium">
           {completedMeasurements.length}/{measurements.length}
         </span>
       </div>
 
-      <div className="relative h-2 bg-white/10 rounded-full overflow-hidden">
+      <div className="relative h-2 bg-[#1f1c18] rounded-full overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary-500 to-accent-500 rounded-full"
+          className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#c4a77d] to-[#9c8f78] rounded-full"
         />
       </div>
 
@@ -57,31 +57,31 @@ export default function MeasurementProgress({
               transition={{ delay: index * 0.05 }}
               className={`flex items-center justify-between p-3 rounded-xl transition-all ${
                 isActive
-                  ? "bg-primary-500/20 border border-primary-500/50"
+                  ? "bg-[#c4a77d]/15 border border-[#c4a77d]/40"
                   : isCompleted
-                  ? "bg-green-500/10 border border-green-500/30"
-                  : "bg-white/5"
+                  ? "bg-[#9c8f78]/10 border border-[#9c8f78]/20"
+                  : "bg-[#1f1c18]/50"
               }`}
             >
               <div className="flex items-center gap-3">
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     isActive
-                      ? "bg-primary-500 text-white"
+                      ? "bg-[#c4a77d] text-[#1f1c18]"
                       : isCompleted
-                      ? "bg-green-500 text-white"
-                      : "bg-white/10 text-white/50"
+                      ? "bg-[#9c8f78] text-[#faf9f7]"
+                      : "bg-[#1f1c18] text-[#78716c]"
                   }`}
                 >
                   {isCompleted ? (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   ) : isActive ? (
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                      className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                      className="w-4 h-4 border-2 border-[#1f1c18] border-t-transparent rounded-full"
                     />
                   ) : (
                     index + 1
@@ -89,11 +89,11 @@ export default function MeasurementProgress({
                 </div>
 
                 <div>
-                  <p className={`font-medium ${isActive || isCompleted ? "text-white" : "text-white/60"}`}>
+                  <p className={`font-medium ${isActive || isCompleted ? "text-[#faf9f7]" : "text-[#78716c]"}`}>
                     {measurement.name}
                   </p>
                   {isCompleted && (
-                    <p className="text-green-400 text-sm">
+                    <p className="text-[#c4a77d] text-sm">
                       {measurement.value} {measurement.unit}
                     </p>
                   )}
@@ -102,14 +102,14 @@ export default function MeasurementProgress({
 
               {isCompleted && (
                 <div className="flex items-center gap-1">
-                  <div className="h-1.5 w-12 bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-1.5 w-12 bg-[#1f1c18] rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${measurement.confidence * 100}%` }}
-                      className="h-full bg-green-400 rounded-full"
+                      className="h-full bg-[#9c8f78] rounded-full"
                     />
                   </div>
-                  <span className="text-xs text-white/40">{Math.round(measurement.confidence * 100)}%</span>
+                  <span className="text-xs text-[#78716c]">{Math.round(measurement.confidence * 100)}%</span>
                 </div>
               )}
             </motion.div>
