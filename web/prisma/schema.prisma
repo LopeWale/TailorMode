@@ -53,14 +53,29 @@ model Organization {
 }
 
 model User {
-  id             String     @id @default(cuid())
-  email          String     @unique
-  name           String?
-  role           UserRole   @default(TAILOR)
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String
+  id              String        @id @default(cuid())
+  email           String?       @unique
+  name            String?
+  firstName       String?
+  lastName        String?
+  profileImageUrl String?
+  replitId        String?       @unique
+  role            UserRole      @default(TAILOR)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  organization    Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String?
+  sessions        Session[]
+}
+
+model Session {
+  sid       String   @id
+  sess      Json
+  expire    DateTime
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expire])
 }
 
 model CaptureSession {
