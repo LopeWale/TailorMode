@@ -1,0 +1,23 @@
+* text=auto
+
+# Ensure JSON lockfiles and config are treated as text to avoid binary heuristics
+*.json text
+*.json linguist-detectable
+
+# Common source and config formats
+*.ts text
+*.tsx text
+*.js text
+*.jsx text
+*.mjs text
+*.cjs text
+*.css text
+*.md text
+*.yml text
+*.yaml text
+*.svg text
+*.env.example text
+
+# Prisma schemas and SQL migrations
+*.prisma text
+*.sql text
