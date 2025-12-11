@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CaptureStatus {
+  CREATED
+  UPLOADED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum CaptureMode {
+  LIDAR
+  RGB
+}
+
+enum MeasurementJobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  ERRORED
+}
+
+enum RegionCode {
+  AWS_CAPE_TOWN
+  GCP_JOHANNESBURG
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  TAILOR
+  SUPPORT
+}
+
+model Organization {
+  id             String           @id @default(cuid())
+  name           String
+  slug           String           @unique
+  region         RegionCode
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  users          User[]
+  captureSessions CaptureSession[]
+  measurementJobs MeasurementJob[]
+  subscriptions  Subscription[]
+}
+
+model User {
+  id             String     @id @default(cuid())
+  email          String     @unique
+  name           String?
+  role           UserRole   @default(TAILOR)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+}
+
+model CaptureSession {
+  id              String         @id @default(cuid())
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  clientLabel     String
+  captureMode     CaptureMode    @default(LIDAR)
+  deviceProfile   Json
+  status          CaptureStatus  @default(CREATED)
+  qcFindings      Json?
+  captureStartedAt DateTime?
+  captureCompletedAt DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  measurementJobs MeasurementJob[]
+}
+
+model MeasurementJob {
+  id             String               @id @default(cuid())
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  captureSession CaptureSession?      @relation(fields: [captureSessionId], references: [id], onDelete: SetNull)
+  captureSessionId String?
+  kind           String
+  status         MeasurementJobStatus @default(QUEUED)
+  errorMessage   String?
+  parameters     Json?
+  requestedAt    DateTime             @default(now())
+  startedAt      DateTime?
+  completedAt    DateTime?
+}
+
+model Subscription {
+  id             String        @id @default(cuid())
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  provider       String
+  externalId     String        @unique
+  status         String
+  seats          Int
+  scansIncluded  Int
+  scansUsed      Int           @default(0)
+  renewsAt       DateTime
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model FeatureFlag {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  description String?
+  enabled     Boolean  @default(false)
+  rollout     Int      @default(100)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
