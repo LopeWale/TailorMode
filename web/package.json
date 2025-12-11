@@ -16,6 +16,7 @@
     "@aws-sdk/s3-request-presigner": "^3.922.0",
     "@prisma/client": "^6.18.0",
     "@sentry/nextjs": "^10.22.0",
+    "@tailwindcss/postcss": "^4.1.18",
     "next": "16.0.0",
     "posthog-node": "^5.10.3",
     "react": "19.2.0",

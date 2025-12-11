@@ -1,6 +1,7 @@
 modules = ["nodejs-20", "web"]
 [agent]
 expertMode = true
+integrations = ["javascript_gemini_ai_integrations:1.0.0"]
 
 [nix]
 channel = "stable-25_05"
