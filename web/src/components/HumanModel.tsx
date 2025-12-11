@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useMemo, useEffect, useState, useCallback } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Environment, Html, Line, useGLTF } from "@react-three/drei";
+import { Canvas, useFrame, extend, useThree } from "@react-three/fiber";
+import { OrbitControls, Html, Line, Float, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
 
 interface Measurement {
@@ -61,100 +61,276 @@ function getLandmarkPosition(landmark: string): [number, number, number] {
   return [0, 1, 0];
 }
 
-function HumanFigure({ 
-  activeMeasurement, 
-  measurements,
-  onAnimationComplete
-}: { 
-  activeMeasurement: number | null; 
-  measurements: Measurement[];
-  onAnimationComplete?: () => void;
-}) {
-  const groupRef = useRef<THREE.Group>(null);
-  const timeRef = useRef(0);
+function createHumanBodyGeometry() {
+  const shape = new THREE.Shape();
+  
+  shape.moveTo(0, 0);
+  shape.bezierCurveTo(0.15, 0, 0.18, 0.1, 0.14, 0.25);
+  shape.bezierCurveTo(0.12, 0.35, 0.13, 0.45, 0.14, 0.55);
+  shape.bezierCurveTo(0.15, 0.65, 0.14, 0.75, 0.12, 0.85);
+  shape.bezierCurveTo(0.11, 0.95, 0.09, 1.05, 0.08, 1.15);
+  shape.lineTo(0, 1.15);
+  
+  const extrudeSettings = {
+    steps: 32,
+    depth: 0.08,
+    bevelEnabled: true,
+    bevelThickness: 0.04,
+    bevelSize: 0.04,
+    bevelSegments: 8
+  };
+  
+  const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+  geometry.center();
+  
+  return geometry;
+}
 
-  useFrame((state, delta) => {
-    timeRef.current += delta;
-    if (groupRef.current) {
-      groupRef.current.rotation.y = Math.sin(timeRef.current * 0.15) * 0.05;
+function HolographicShell({ time }: { time: number }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const materialRef = useRef<THREE.ShaderMaterial>(null);
+
+  const uniforms = useMemo(() => ({
+    uTime: { value: 0 },
+    uScanLine: { value: 0 },
+    uColor: { value: new THREE.Color("#c4a77d") },
+  }), []);
+
+  const vertexShader = `
+    varying vec2 vUv;
+    varying vec3 vNormal;
+    varying vec3 vPosition;
+    
+    void main() {
+      vUv = uv;
+      vNormal = normalize(normalMatrix * normal);
+      vPosition = position;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `;
+
+  const fragmentShader = `
+    uniform float uTime;
+    uniform float uScanLine;
+    uniform vec3 uColor;
+    
+    varying vec2 vUv;
+    varying vec3 vNormal;
+    varying vec3 vPosition;
+    
+    void main() {
+      float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.0);
+      
+      float scanLine = smoothstep(0.02, 0.0, abs(vPosition.y - uScanLine));
+      scanLine *= 0.8;
+      
+      float grid = 0.0;
+      float gridSize = 30.0;
+      vec2 gridUv = fract(vUv * gridSize);
+      grid = step(0.95, gridUv.x) + step(0.95, gridUv.y);
+      grid = min(grid, 0.15);
+      
+      vec3 color = uColor;
+      float alpha = fresnel * 0.4 + scanLine + grid * 0.3;
+      
+      gl_FragColor = vec4(color, alpha * 0.6);
+    }
+  `;
+
+  useFrame(() => {
+    if (materialRef.current) {
+      materialRef.current.uniforms.uTime.value = time;
+      materialRef.current.uniforms.uScanLine.value = (Math.sin(time * 0.5) * 0.5 + 0.5) * 2.0 - 0.5;
     }
   });
 
-  const mainMaterial = useMemo(() => new THREE.MeshStandardMaterial({
-    color: new THREE.Color("#8b7355"),
-    roughness: 0.7,
-    metalness: 0.1,
-  }), []);
+  return (
+    <mesh ref={meshRef} scale={[1.02, 1.02, 1.02]}>
+      <capsuleGeometry args={[0.18, 1.4, 32, 32]} />
+      <shaderMaterial
+        ref={materialRef}
+        vertexShader={vertexShader}
+        fragmentShader={fragmentShader}
+        uniforms={uniforms}
+        transparent
+        side={THREE.DoubleSide}
+        depthWrite={false}
+      />
+    </mesh>
+  );
+}
 
-  const highlightMaterial = useMemo(() => new THREE.MeshStandardMaterial({
-    color: new THREE.Color("#c4a77d"),
-    roughness: 0.5,
-    metalness: 0.2,
-    emissive: new THREE.Color("#c4a77d"),
-    emissiveIntensity: activeMeasurement !== null ? 0.15 : 0,
-  }), [activeMeasurement]);
+function GlowingRing({ y, delay, color }: { y: number; delay: number; color: string }) {
+  const ringRef = useRef<THREE.Mesh>(null);
+  
+  useFrame(({ clock }) => {
+    if (ringRef.current) {
+      const t = clock.getElapsedTime() + delay;
+      const scale = 1 + Math.sin(t * 2) * 0.05;
+      ringRef.current.scale.set(scale, scale, 1);
+      ringRef.current.rotation.z = t * 0.2;
+      const material = ringRef.current.material as THREE.MeshBasicMaterial;
+      material.opacity = 0.3 + Math.sin(t * 3) * 0.1;
+    }
+  });
 
   return (
-    <group ref={groupRef} position={[0, -0.9, 0]}>
-      <mesh position={[0, 1.72, 0]} material={mainMaterial} castShadow>
-        <sphereGeometry args={[0.12, 48, 48]} />
+    <mesh ref={ringRef} position={[0, y, 0]} rotation={[Math.PI / 2, 0, 0]}>
+      <ringGeometry args={[0.25, 0.27, 64]} />
+      <meshBasicMaterial color={color} transparent opacity={0.3} side={THREE.DoubleSide} />
+    </mesh>
+  );
+}
+
+function PremiumBody({ 
+  isActive,
+}: { 
+  isActive: boolean;
+}) {
+  const groupRef = useRef<THREE.Group>(null);
+  const timeRef = useRef(0);
+  const glowIntensity = useRef(0);
+
+  useFrame((state, delta) => {
+    timeRef.current += delta;
+    
+    if (groupRef.current) {
+      groupRef.current.rotation.y = Math.sin(timeRef.current * 0.3) * 0.08;
+    }
+    
+    const targetGlow = isActive ? 0.4 : 0.15;
+    glowIntensity.current += (targetGlow - glowIntensity.current) * 0.1;
+  });
+
+  const bodyMaterial = useMemo(() => new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color("#3d3630"),
+    metalness: 0.3,
+    roughness: 0.4,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.1,
+    envMapIntensity: 0.5,
+  }), []);
+
+  const glowMaterial = useMemo(() => new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color("#c4a77d"),
+    metalness: 0.2,
+    roughness: 0.3,
+    clearcoat: 0.8,
+    clearcoatRoughness: 0.2,
+    emissive: new THREE.Color("#c4a77d"),
+    emissiveIntensity: 0.2,
+    envMapIntensity: 0.6,
+  }), []);
+
+  const jointMaterial = useMemo(() => new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color("#2a2520"),
+    metalness: 0.5,
+    roughness: 0.2,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.05,
+  }), []);
+
+  return (
+    <group ref={groupRef}>
+      <mesh position={[0, 1.72, 0]} castShadow>
+        <sphereGeometry args={[0.115, 64, 64]} />
+        <meshPhysicalMaterial
+          color="#3d3630"
+          metalness={0.3}
+          roughness={0.35}
+          clearcoat={1.0}
+          clearcoatRoughness={0.1}
+        />
+      </mesh>
+      
+      <mesh position={[0, 1.72, 0.06]}>
+        <planeGeometry args={[0.08, 0.03]} />
+        <meshBasicMaterial color="#c4a77d" transparent opacity={0.7} />
       </mesh>
 
-      <mesh position={[0, 1.55, 0]} material={mainMaterial} castShadow>
-        <cylinderGeometry args={[0.045, 0.06, 0.1, 24]} />
+      <mesh position={[0, 1.57, 0]} castShadow>
+        <cylinderGeometry args={[0.05, 0.07, 0.12, 32]} />
+        <primitive object={jointMaterial} attach="material" />
       </mesh>
 
-      <mesh position={[0, 1.28, 0]} material={highlightMaterial} castShadow>
-        <capsuleGeometry args={[0.14, 0.3, 12, 24]} />
+      <mesh position={[0, 1.3, 0]} castShadow>
+        <capsuleGeometry args={[0.16, 0.28, 16, 32]} />
+        <primitive object={isActive ? glowMaterial : bodyMaterial} attach="material" />
       </mesh>
 
-      <mesh position={[0, 0.95, 0]} material={mainMaterial} castShadow>
-        <capsuleGeometry args={[0.13, 0.18, 12, 24]} />
+      <mesh position={[0, 0.97, 0]} castShadow>
+        <capsuleGeometry args={[0.14, 0.18, 16, 32]} />
+        <primitive object={bodyMaterial} attach="material" />
+      </mesh>
+
+      <mesh position={[0, 0.82, 0]} castShadow>
+        <capsuleGeometry args={[0.155, 0.1, 16, 32]} />
+        <primitive object={bodyMaterial} attach="material" />
       </mesh>
 
       {[-1, 1].map((side) => (
         <group key={`arm-${side}`}>
-          <mesh position={[side * 0.2, 1.45, 0]} material={mainMaterial} castShadow>
-            <sphereGeometry args={[0.045, 24, 24]} />
+          <mesh position={[side * 0.21, 1.44, 0]} castShadow>
+            <sphereGeometry args={[0.055, 32, 32]} />
+            <primitive object={jointMaterial} attach="material" />
           </mesh>
-          <mesh position={[side * 0.28, 1.3, 0]} rotation={[0, 0, side * 0.2]} material={mainMaterial} castShadow>
-            <capsuleGeometry args={[0.032, 0.2, 8, 24]} />
+          
+          <mesh position={[side * 0.3, 1.28, 0]} rotation={[0, 0, side * 0.25]} castShadow>
+            <capsuleGeometry args={[0.04, 0.22, 12, 24]} />
+            <primitive object={bodyMaterial} attach="material" />
           </mesh>
-          <mesh position={[side * 0.35, 1.12, 0]} rotation={[0, 0, side * 0.15]} material={mainMaterial} castShadow>
-            <capsuleGeometry args={[0.028, 0.2, 8, 24]} />
+          
+          <mesh position={[side * 0.36, 1.12, 0]} castShadow>
+            <sphereGeometry args={[0.035, 24, 24]} />
+            <primitive object={jointMaterial} attach="material" />
           </mesh>
-          <mesh position={[side * 0.42, 0.95, 0]} material={mainMaterial} castShadow>
-            <sphereGeometry args={[0.025, 24, 24]} />
+          
+          <mesh position={[side * 0.42, 0.98, 0]} rotation={[0, 0, side * 0.1]} castShadow>
+            <capsuleGeometry args={[0.032, 0.2, 12, 24]} />
+            <primitive object={bodyMaterial} attach="material" />
+          </mesh>
+          
+          <mesh position={[side * 0.47, 0.82, 0]} castShadow>
+            <sphereGeometry args={[0.028, 24, 24]} />
+            <primitive object={jointMaterial} attach="material" />
           </mesh>
         </group>
       ))}
 
       {[-1, 1].map((side) => (
         <group key={`leg-${side}`}>
-          <mesh position={[side * 0.08, 0.82, 0]} material={mainMaterial} castShadow>
-            <sphereGeometry args={[0.05, 24, 24]} />
+          <mesh position={[side * 0.085, 0.72, 0]} castShadow>
+            <sphereGeometry args={[0.055, 32, 32]} />
+            <primitive object={jointMaterial} attach="material" />
           </mesh>
-          <mesh position={[side * 0.08, 0.58, 0]} material={mainMaterial} castShadow>
-            <capsuleGeometry args={[0.055, 0.38, 8, 24]} />
+          
+          <mesh position={[side * 0.09, 0.52, 0]} castShadow>
+            <capsuleGeometry args={[0.06, 0.32, 12, 24]} />
+            <primitive object={bodyMaterial} attach="material" />
           </mesh>
-          <mesh position={[side * 0.08, 0.35, 0]} material={mainMaterial} castShadow>
-            <sphereGeometry args={[0.04, 24, 24]} />
+          
+          <mesh position={[side * 0.09, 0.32, 0]} castShadow>
+            <sphereGeometry args={[0.045, 24, 24]} />
+            <primitive object={jointMaterial} attach="material" />
           </mesh>
-          <mesh position={[side * 0.08, 0.18, 0]} material={mainMaterial} castShadow>
-            <capsuleGeometry args={[0.04, 0.28, 8, 24]} />
+          
+          <mesh position={[side * 0.09, 0.16, 0]} castShadow>
+            <capsuleGeometry args={[0.048, 0.24, 12, 24]} />
+            <primitive object={bodyMaterial} attach="material" />
           </mesh>
-          <mesh position={[side * 0.08, 0.02, 0.02]} material={mainMaterial} castShadow>
-            <boxGeometry args={[0.06, 0.04, 0.1]} />
+          
+          <mesh position={[side * 0.09, 0.02, 0.025]} castShadow>
+            <boxGeometry args={[0.065, 0.04, 0.11]} />
+            <primitive object={bodyMaterial} attach="material" />
           </mesh>
         </group>
       ))}
 
-      {activeMeasurement !== null && measurements[activeMeasurement] && (
-        <MeasurementLine 
-          measurement={measurements[activeMeasurement]} 
-          onComplete={onAnimationComplete}
-        />
-      )}
+      <HolographicShell time={timeRef.current} />
+      
+      <GlowingRing y={1.25} delay={0} color="#c4a77d" />
+      <GlowingRing y={1.0} delay={1} color="#9c8f78" />
+      <GlowingRing y={0.75} delay={2} color="#c4a77d" />
     </group>
   );
 }
@@ -168,6 +344,7 @@ function MeasurementLine({
 }) {
   const [progress, setProgress] = useState(0);
   const hasCompletedRef = useRef(false);
+  const lineRef = useRef<THREE.Group>(null);
 
   useEffect(() => {
     setProgress(0);
@@ -179,12 +356,12 @@ function MeasurementLine({
 
   useFrame((_, delta) => {
     if (progress < 1) {
-      setProgress((p) => Math.min(p + delta * 1.8, 1));
+      setProgress((p) => Math.min(p + delta * 1.5, 1));
     } else if (!hasCompletedRef.current && onComplete) {
       hasCompletedRef.current = true;
       setTimeout(() => {
         onComplete();
-      }, 500);
+      }, 600);
     }
   });
 
@@ -196,39 +373,56 @@ function MeasurementLine({
 
   const midPoint: [number, number, number] = [
     (startPos[0] + currentEnd[0]) / 2,
-    (startPos[1] + currentEnd[1]) / 2 + 0.15,
-    (startPos[2] + currentEnd[2]) / 2 + 0.25,
+    (startPos[1] + currentEnd[1]) / 2 + 0.12,
+    (startPos[2] + currentEnd[2]) / 2 + 0.3,
   ];
 
-  const linePoints: [number, number, number][] = [startPos, currentEnd];
-
   return (
-    <group>
-      <mesh position={startPos}>
-        <sphereGeometry args={[0.015, 16, 16]} />
-        <meshBasicMaterial color="#c4a77d" />
-      </mesh>
+    <group ref={lineRef}>
+      <Float speed={3} rotationIntensity={0} floatIntensity={0.1}>
+        <mesh position={startPos}>
+          <sphereGeometry args={[0.02, 24, 24]} />
+          <meshBasicMaterial color="#c4a77d" />
+        </mesh>
+        <mesh position={startPos}>
+          <ringGeometry args={[0.025, 0.035, 32]} />
+          <meshBasicMaterial color="#c4a77d" transparent opacity={0.5} side={THREE.DoubleSide} />
+        </mesh>
+      </Float>
 
-      <mesh position={currentEnd}>
-        <sphereGeometry args={[0.015, 16, 16]} />
-        <meshBasicMaterial color="#c4a77d" />
-      </mesh>
+      <Float speed={3} rotationIntensity={0} floatIntensity={0.1}>
+        <mesh position={currentEnd}>
+          <sphereGeometry args={[0.02, 24, 24]} />
+          <meshBasicMaterial color="#c4a77d" />
+        </mesh>
+        <mesh position={currentEnd}>
+          <ringGeometry args={[0.025, 0.035, 32]} />
+          <meshBasicMaterial color="#c4a77d" transparent opacity={0.5} side={THREE.DoubleSide} />
+        </mesh>
+      </Float>
 
       <Line
-        points={linePoints}
+        points={[startPos, currentEnd]}
         color="#c4a77d"
-        lineWidth={1.5}
+        lineWidth={2}
+        dashed
+        dashSize={0.02}
+        gapSize={0.01}
       />
 
-      {progress > 0.7 && (
+      {progress > 0.6 && (
         <Html position={midPoint} center>
           <div 
-            className="surface-glass px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap"
-            style={{ animation: 'fade-up 0.3s ease-out' }}
+            className="px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap backdrop-blur-xl border border-[#c4a77d]/20"
+            style={{ 
+              background: 'linear-gradient(135deg, rgba(31, 28, 24, 0.95), rgba(15, 14, 12, 0.98))',
+              animation: 'fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 20px rgba(196, 167, 125, 0.15)'
+            }}
           >
-            <span className="text-[#c4a77d] font-semibold">{measurement.value}</span>
-            <span className="text-white/50 ml-1">{measurement.unit}</span>
-            <span className="text-white/30 ml-2 text-[10px]">{measurement.name}</span>
+            <span className="text-[#c4a77d] font-bold text-base">{measurement.value}</span>
+            <span className="text-[#9c8f78] ml-1">{measurement.unit}</span>
+            <div className="text-[#78716c] text-xs mt-0.5">{measurement.name}</div>
           </div>
         </Html>
       )}
@@ -236,22 +430,50 @@ function MeasurementLine({
   );
 }
 
-function GridFloor() {
+function PremiumFloor() {
+  const floorRef = useRef<THREE.Mesh>(null);
+
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.91, 0]} receiveShadow>
-        <circleGeometry args={[2, 64]} />
-        <meshStandardMaterial
-          color="#1a1816"
-          roughness={0.95}
-          metalness={0}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
+        <circleGeometry args={[2.5, 128]} />
+        <meshPhysicalMaterial
+          color="#0a0908"
+          roughness={0.2}
+          metalness={0.8}
+          clearcoat={0.5}
+          clearcoatRoughness={0.3}
         />
       </mesh>
+
       <gridHelper 
-        args={[4, 20, "#2a2520", "#1f1c18"]} 
-        position={[0, -0.9, 0]} 
+        args={[5, 40, "#2a2520", "#1a1816"]} 
+        position={[0, 0.001, 0]} 
       />
+
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]}>
+        <ringGeometry args={[0.8, 0.82, 64]} />
+        <meshBasicMaterial color="#c4a77d" transparent opacity={0.2} side={THREE.DoubleSide} />
+      </mesh>
+      
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]}>
+        <ringGeometry args={[1.2, 1.22, 64]} />
+        <meshBasicMaterial color="#9c8f78" transparent opacity={0.1} side={THREE.DoubleSide} />
+      </mesh>
     </group>
+  );
+}
+
+function AmbientParticles() {
+  return (
+    <Sparkles
+      count={50}
+      scale={4}
+      size={1.5}
+      speed={0.2}
+      color="#c4a77d"
+      opacity={0.3}
+    />
   );
 }
 
@@ -268,39 +490,62 @@ function Scene({
 }) {
   return (
     <>
-      <ambientLight intensity={0.4} color="#faf9f7" />
+      <ambientLight intensity={0.3} color="#faf9f7" />
+      
       <directionalLight 
-        position={[3, 8, 4]} 
-        intensity={0.6} 
+        position={[5, 10, 5]} 
+        intensity={0.8} 
         color="#faf9f7" 
         castShadow
-        shadow-mapSize={[1024, 1024]}
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-far={50}
+        shadow-camera-left={-10}
+        shadow-camera-right={10}
+        shadow-camera-top={10}
+        shadow-camera-bottom={-10}
       />
-      <pointLight position={[-3, 3, -3]} intensity={0.2} color="#c4a77d" />
-      <pointLight position={[2, 2, 4]} intensity={0.15} color="#d4c4a8" />
-
-      <HumanFigure 
-        activeMeasurement={activeMeasurement} 
-        measurements={measurements} 
-        onAnimationComplete={onAnimationComplete}
+      
+      <pointLight position={[-3, 4, -2]} intensity={0.4} color="#c4a77d" distance={10} />
+      <pointLight position={[3, 2, 4]} intensity={0.3} color="#d4c4a8" distance={8} />
+      <pointLight position={[0, 0.5, 3]} intensity={0.2} color="#c4a77d" distance={6} />
+      
+      <spotLight
+        position={[0, 5, 0]}
+        angle={0.5}
+        penumbra={0.8}
+        intensity={0.6}
+        color="#c4a77d"
+        castShadow
       />
 
-      <GridFloor />
+      <group position={[0, 0, 0]}>
+        <PremiumBody isActive={activeMeasurement !== null} />
+        
+        {activeMeasurement !== null && measurements[activeMeasurement] && (
+          <MeasurementLine 
+            measurement={measurements[activeMeasurement]} 
+            onComplete={onAnimationComplete}
+          />
+        )}
+      </group>
+
+      <PremiumFloor />
+      <AmbientParticles />
 
       <OrbitControls
         enablePan={false}
         enableZoom={isInteractive}
-        minDistance={2}
-        maxDistance={4.5}
+        minDistance={2.2}
+        maxDistance={5}
         minPolarAngle={Math.PI / 6}
-        maxPolarAngle={Math.PI / 2.1}
-        autoRotate={isInteractive && activeMeasurement === null}
-        autoRotateSpeed={0.2}
+        maxPolarAngle={Math.PI / 2.2}
+        autoRotate={!isInteractive || activeMeasurement === null}
+        autoRotateSpeed={0.3}
         enableDamping
         dampingFactor={0.05}
       />
 
-      <fog attach="fog" args={['#0f0e0c', 4, 12]} />
+      <fog attach="fog" args={['#0a0908', 5, 15]} />
     </>
   );
 }
@@ -313,11 +558,18 @@ export default function HumanModel({ measurements, activeMeasurement, onMeasurem
   }, [activeMeasurement, onMeasurementComplete]);
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full relative">
+      <div className="absolute inset-0 bg-gradient-radial from-[#1a1816] via-[#0f0e0c] to-[#0a0908]" />
       <Canvas
         shadows
-        camera={{ position: [0, 0.2, 3], fov: 35 }}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        camera={{ position: [0, 0.5, 3.5], fov: 32 }}
+        gl={{ 
+          antialias: true, 
+          alpha: true, 
+          powerPreference: "high-performance",
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 1.2
+        }}
         style={{ background: "transparent" }}
         dpr={[1, 2]}
       >

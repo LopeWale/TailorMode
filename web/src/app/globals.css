@@ -162,6 +162,36 @@ canvas {
   touch-action: none;
 }
 
+.bg-gradient-radial {
+  background: radial-gradient(ellipse at center, var(--tw-gradient-stops));
+}
+
+@keyframes scan-line {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+.animate-scan-line {
+  animation: scan-line 3s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(196, 167, 125, 0.2), 0 0 40px rgba(196, 167, 125, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(196, 167, 125, 0.3), 0 0 60px rgba(196, 167, 125, 0.15);
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
 ::-webkit-scrollbar {
   width: 4px;
 }
