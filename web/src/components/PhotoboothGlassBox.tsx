@@ -18,8 +18,8 @@ interface GlassBoothProps {
 }
 
 function GlassBooth({ videoElement, cameraState }: GlassBoothProps) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const innerMeshRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  const { gl, size } = useThree();
   
   const videoTexture = useMemo(() => {
     if (!videoElement) return null;
@@ -28,8 +28,8 @@ function GlassBooth({ videoElement, cameraState }: GlassBoothProps) {
     texture.magFilter = THREE.LinearFilter;
     texture.format = THREE.RGBAFormat;
     texture.colorSpace = THREE.SRGBColorSpace;
-    texture.wrapS = THREE.ClampToEdgeWrapping;
-    texture.wrapT = THREE.ClampToEdgeWrapping;
+    texture.wrapS = THREE.MirroredRepeatWrapping;
+    texture.wrapT = THREE.MirroredRepeatWrapping;
     return texture;
   }, [videoElement]);
 
@@ -42,13 +42,9 @@ function GlassBooth({ videoElement, cameraState }: GlassBoothProps) {
   }, [videoTexture]);
 
   useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.05;
-      meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.2) * 0.02;
-    }
-    if (innerMeshRef.current) {
-      innerMeshRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.05;
-      innerMeshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.2) * 0.02;
+    if (groupRef.current) {
+      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.25) * 0.04;
+      groupRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.2) * 0.015;
     }
     
     if (videoTexture) {
@@ -59,86 +55,101 @@ function GlassBooth({ videoElement, cameraState }: GlassBoothProps) {
   const isActive = cameraState === "active" && videoTexture;
 
   return (
-    <group>
-      <mesh ref={innerMeshRef} position={[0, 0, -0.05]}>
-        <RoundedBox args={[1.65, 2.25, 0.01]} radius={0.08} smoothness={4}>
+    <group ref={groupRef}>
+      <mesh position={[0, 0, -0.06]}>
+        <RoundedBox args={[1.7, 2.3, 0.02]} radius={0.08} smoothness={4}>
           <meshBasicMaterial
             map={isActive ? videoTexture : null}
-            color={isActive ? "#ffffff" : "#0a0908"}
-            opacity={isActive ? 0.15 : 1}
+            color={isActive ? "#888888" : "#151312"}
+            opacity={isActive ? 0.35 : 1}
             transparent={true}
           />
         </RoundedBox>
       </mesh>
 
-      <mesh ref={meshRef} position={[0, 0, 0]}>
-        <RoundedBox args={[1.8, 2.4, 0.12]} radius={0.1} smoothness={4}>
+      <mesh position={[0, 0, 0]}>
+        <RoundedBox args={[1.8, 2.4, 0.1]} radius={0.1} smoothness={4}>
           <meshPhysicalMaterial
-            color="#1a1816"
-            metalness={0.05}
-            roughness={0.1}
-            transmission={0.95}
-            thickness={0.3}
-            envMapIntensity={0.5}
+            color="#e8e4df"
+            metalness={0.15}
+            roughness={0.35}
+            transmission={0.7}
+            thickness={1.5}
+            envMapIntensity={0.8}
+            clearcoat={0.8}
+            clearcoatRoughness={0.3}
+            ior={1.5}
+            transparent={true}
+            opacity={0.85}
+            side={THREE.FrontSide}
+          />
+        </RoundedBox>
+      </mesh>
+
+      <mesh position={[0, 0, 0.051]}>
+        <RoundedBox args={[1.78, 2.38, 0.001]} radius={0.1} smoothness={4}>
+          <meshPhysicalMaterial
+            color="#ffffff"
+            metalness={0.9}
+            roughness={0.15}
+            envMapIntensity={1.2}
             clearcoat={1}
             clearcoatRoughness={0.05}
-            ior={1.45}
             transparent={true}
-            opacity={0.98}
-            side={THREE.DoubleSide}
+            opacity={0.15}
           />
         </RoundedBox>
       </mesh>
 
-      <pointLight position={[2, 2, 3]} intensity={0.4} color="#c4a77d" />
-      <pointLight position={[-2, 1, 3]} intensity={0.3} color="#9c8f78" />
-      <pointLight position={[0, -1, 2]} intensity={0.2} color="#e8e0d5" />
+      <pointLight position={[3, 3, 4]} intensity={0.6} color="#ffffff" />
+      <pointLight position={[-3, 2, 4]} intensity={0.4} color="#c4a77d" />
+      <pointLight position={[0, -2, 3]} intensity={0.3} color="#e8e0d5" />
     </group>
   );
 }
 
 function FallbackBooth() {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.05;
-      meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.2) * 0.02;
+    if (groupRef.current) {
+      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.25) * 0.04;
+      groupRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.2) * 0.015;
     }
   });
 
   return (
-    <group>
-      <mesh position={[0, 0, -0.05]}>
-        <RoundedBox args={[1.65, 2.25, 0.01]} radius={0.08} smoothness={4}>
+    <group ref={groupRef}>
+      <mesh position={[0, 0, -0.06]}>
+        <RoundedBox args={[1.7, 2.3, 0.02]} radius={0.08} smoothness={4}>
           <meshStandardMaterial
-            color="#0f0d0b"
-            metalness={0.3}
-            roughness={0.7}
+            color="#1a1816"
+            metalness={0.2}
+            roughness={0.8}
           />
         </RoundedBox>
       </mesh>
 
-      <mesh ref={meshRef} position={[0, 0, 0]}>
-        <RoundedBox args={[1.8, 2.4, 0.12]} radius={0.1} smoothness={4}>
+      <mesh position={[0, 0, 0]}>
+        <RoundedBox args={[1.8, 2.4, 0.1]} radius={0.1} smoothness={4}>
           <meshPhysicalMaterial
-            color="#2a2520"
-            metalness={0.05}
-            roughness={0.15}
-            transmission={0.88}
-            thickness={0.3}
-            clearcoat={1}
-            clearcoatRoughness={0.15}
-            ior={1.4}
+            color="#d4cfc8"
+            metalness={0.1}
+            roughness={0.4}
+            transmission={0.75}
+            thickness={1.2}
+            clearcoat={0.6}
+            clearcoatRoughness={0.35}
+            ior={1.45}
             transparent={true}
-            opacity={0.92}
-            side={THREE.DoubleSide}
+            opacity={0.88}
+            side={THREE.FrontSide}
           />
         </RoundedBox>
       </mesh>
 
-      <pointLight position={[2, 2, 3]} intensity={0.3} color="#c4a77d" />
-      <pointLight position={[-2, 1, 3]} intensity={0.2} color="#9c8f78" />
+      <pointLight position={[3, 3, 4]} intensity={0.5} color="#ffffff" />
+      <pointLight position={[-3, 2, 4]} intensity={0.3} color="#c4a77d" />
     </group>
   );
 }
@@ -146,8 +157,8 @@ function FallbackBooth() {
 function Scene({ videoElement, cameraState }: GlassBoothProps) {
   return (
     <>
-      <ambientLight intensity={0.2} />
-      <directionalLight position={[5, 5, 5]} intensity={0.4} color="#e8e0d5" />
+      <ambientLight intensity={0.4} />
+      <directionalLight position={[5, 5, 5]} intensity={0.5} color="#ffffff" />
       
       {cameraState === "active" && videoElement ? (
         <GlassBooth videoElement={videoElement} cameraState={cameraState} />
@@ -157,14 +168,14 @@ function Scene({ videoElement, cameraState }: GlassBoothProps) {
       
       <ContactShadows
         position={[0, -1.4, 0]}
-        opacity={0.25}
+        opacity={0.2}
         scale={4}
-        blur={2.5}
+        blur={3}
         far={2}
         color="#1f1c18"
       />
       
-      <Environment preset="night" />
+      <Environment preset="apartment" />
     </>
   );
 }
