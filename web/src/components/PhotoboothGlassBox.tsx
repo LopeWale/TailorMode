@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useMemo, useEffect, useState } from "react";
-import { Canvas, useFrame, useThree, ThreeElements } from "@react-three/fiber";
+import { Canvas, useFrame, ThreeElements } from "@react-three/fiber";
 import { RoundedBox, Environment, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
 import { useCameraFeed, type CameraState } from "@/hooks/useCameraFeed";
@@ -19,7 +19,7 @@ interface GlassBoothProps {
 
 function GlassBooth({ videoElement, cameraState }: GlassBoothProps) {
   const groupRef = useRef<THREE.Group>(null);
-  const { gl, size } = useThree();
+  const [textureReady, setTextureReady] = useState(false);
   
   const videoTexture = useMemo(() => {
     if (!videoElement) return null;
@@ -28,10 +28,22 @@ function GlassBooth({ videoElement, cameraState }: GlassBoothProps) {
     texture.magFilter = THREE.LinearFilter;
     texture.format = THREE.RGBAFormat;
     texture.colorSpace = THREE.SRGBColorSpace;
-    texture.wrapS = THREE.MirroredRepeatWrapping;
-    texture.wrapT = THREE.MirroredRepeatWrapping;
+    texture.generateMipmaps = false;
     return texture;
   }, [videoElement]);
+
+  useEffect(() => {
+    if (videoElement && videoTexture) {
+      const checkReady = () => {
+        if (videoElement.readyState >= 2) {
+          setTextureReady(true);
+        }
+      };
+      videoElement.addEventListener("loadeddata", checkReady);
+      checkReady();
+      return () => videoElement.removeEventListener("loadeddata", checkReady);
+    }
+  }, [videoElement, videoTexture]);
 
   useEffect(() => {
     return () => {
@@ -41,28 +53,30 @@ function GlassBooth({ videoElement, cameraState }: GlassBoothProps) {
     };
   }, [videoTexture]);
 
-  useFrame((state) => {
+  useFrame(() => {
     if (groupRef.current) {
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.25) * 0.04;
-      groupRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.2) * 0.015;
+      const time = Date.now() * 0.001;
+      groupRef.current.rotation.y = Math.sin(time * 0.25) * 0.04;
+      groupRef.current.rotation.x = Math.sin(time * 0.2) * 0.015;
     }
     
-    if (videoTexture) {
+    if (videoTexture && textureReady) {
       videoTexture.needsUpdate = true;
     }
   });
 
-  const isActive = cameraState === "active" && videoTexture;
+  const showVideo = cameraState === "active" && videoTexture && textureReady;
 
   return (
     <group ref={groupRef}>
-      <mesh position={[0, 0, -0.06]}>
-        <RoundedBox args={[1.7, 2.3, 0.02]} radius={0.08} smoothness={4}>
+      <mesh position={[0, 0, -0.055]}>
+        <RoundedBox args={[1.68, 2.28, 0.01]} radius={0.08} smoothness={4}>
           <meshBasicMaterial
-            map={isActive ? videoTexture : null}
-            color={isActive ? "#888888" : "#151312"}
-            opacity={isActive ? 0.35 : 1}
+            map={showVideo ? videoTexture : null}
+            color={showVideo ? "#aaaaaa" : "#1a1816"}
             transparent={true}
+            opacity={showVideo ? 0.5 : 1}
+            toneMapped={false}
           />
         </RoundedBox>
       </mesh>
@@ -70,40 +84,40 @@ function GlassBooth({ videoElement, cameraState }: GlassBoothProps) {
       <mesh position={[0, 0, 0]}>
         <RoundedBox args={[1.8, 2.4, 0.1]} radius={0.1} smoothness={4}>
           <meshPhysicalMaterial
-            color="#e8e4df"
-            metalness={0.15}
-            roughness={0.35}
-            transmission={0.7}
-            thickness={1.5}
-            envMapIntensity={0.8}
-            clearcoat={0.8}
-            clearcoatRoughness={0.3}
+            color="#f0ede8"
+            metalness={0.1}
+            roughness={0.25}
+            transmission={0.8}
+            thickness={0.8}
+            envMapIntensity={0.6}
+            clearcoat={0.9}
+            clearcoatRoughness={0.2}
             ior={1.5}
             transparent={true}
-            opacity={0.85}
+            opacity={0.9}
             side={THREE.FrontSide}
           />
         </RoundedBox>
       </mesh>
 
-      <mesh position={[0, 0, 0.051]}>
+      <mesh position={[0, 0, 0.052]}>
         <RoundedBox args={[1.78, 2.38, 0.001]} radius={0.1} smoothness={4}>
           <meshPhysicalMaterial
             color="#ffffff"
-            metalness={0.9}
-            roughness={0.15}
-            envMapIntensity={1.2}
+            metalness={0.95}
+            roughness={0.1}
+            envMapIntensity={1.0}
             clearcoat={1}
-            clearcoatRoughness={0.05}
+            clearcoatRoughness={0.02}
             transparent={true}
-            opacity={0.15}
+            opacity={0.12}
           />
         </RoundedBox>
       </mesh>
 
-      <pointLight position={[3, 3, 4]} intensity={0.6} color="#ffffff" />
-      <pointLight position={[-3, 2, 4]} intensity={0.4} color="#c4a77d" />
-      <pointLight position={[0, -2, 3]} intensity={0.3} color="#e8e0d5" />
+      <pointLight position={[3, 3, 4]} intensity={0.5} color="#ffffff" />
+      <pointLight position={[-3, 2, 4]} intensity={0.35} color="#c4a77d" />
+      <pointLight position={[0, -2, 3]} intensity={0.25} color="#e8e0d5" />
     </group>
   );
 }
@@ -111,17 +125,18 @@ function GlassBooth({ videoElement, cameraState }: GlassBoothProps) {
 function FallbackBooth() {
   const groupRef = useRef<THREE.Group>(null);
 
-  useFrame((state) => {
+  useFrame(() => {
     if (groupRef.current) {
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.25) * 0.04;
-      groupRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.2) * 0.015;
+      const time = Date.now() * 0.001;
+      groupRef.current.rotation.y = Math.sin(time * 0.25) * 0.04;
+      groupRef.current.rotation.x = Math.sin(time * 0.2) * 0.015;
     }
   });
 
   return (
     <group ref={groupRef}>
-      <mesh position={[0, 0, -0.06]}>
-        <RoundedBox args={[1.7, 2.3, 0.02]} radius={0.08} smoothness={4}>
+      <mesh position={[0, 0, -0.055]}>
+        <RoundedBox args={[1.68, 2.28, 0.01]} radius={0.08} smoothness={4}>
           <meshStandardMaterial
             color="#1a1816"
             metalness={0.2}
@@ -133,22 +148,22 @@ function FallbackBooth() {
       <mesh position={[0, 0, 0]}>
         <RoundedBox args={[1.8, 2.4, 0.1]} radius={0.1} smoothness={4}>
           <meshPhysicalMaterial
-            color="#d4cfc8"
-            metalness={0.1}
-            roughness={0.4}
-            transmission={0.75}
-            thickness={1.2}
-            clearcoat={0.6}
-            clearcoatRoughness={0.35}
+            color="#e8e4df"
+            metalness={0.08}
+            roughness={0.3}
+            transmission={0.82}
+            thickness={0.8}
+            clearcoat={0.8}
+            clearcoatRoughness={0.25}
             ior={1.45}
             transparent={true}
-            opacity={0.88}
+            opacity={0.92}
             side={THREE.FrontSide}
           />
         </RoundedBox>
       </mesh>
 
-      <pointLight position={[3, 3, 4]} intensity={0.5} color="#ffffff" />
+      <pointLight position={[3, 3, 4]} intensity={0.45} color="#ffffff" />
       <pointLight position={[-3, 2, 4]} intensity={0.3} color="#c4a77d" />
     </group>
   );
@@ -157,8 +172,8 @@ function FallbackBooth() {
 function Scene({ videoElement, cameraState }: GlassBoothProps) {
   return (
     <>
-      <ambientLight intensity={0.4} />
-      <directionalLight position={[5, 5, 5]} intensity={0.5} color="#ffffff" />
+      <ambientLight intensity={0.35} />
+      <directionalLight position={[5, 5, 5]} intensity={0.45} color="#ffffff" />
       
       {cameraState === "active" && videoElement ? (
         <GlassBooth videoElement={videoElement} cameraState={cameraState} />
@@ -185,7 +200,7 @@ interface PhotoboothGlassBoxProps {
 }
 
 export default function PhotoboothGlassBox({ className }: PhotoboothGlassBoxProps) {
-  const { videoRef, state, error } = useCameraFeed();
+  const { videoRef, state } = useCameraFeed();
   const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
 
   useEffect(() => {

@@ -28,14 +28,23 @@ export function useCameraFeed(): UseCameraFeedResult {
     setError(null);
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { exact: "user" },
-          width: { ideal: 320 },
-          height: { ideal: 240 },
-        },
-        audio: false,
-      });
+      let stream: MediaStream;
+      
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: "user" },
+            width: { ideal: 480 },
+            height: { ideal: 360 },
+          },
+          audio: false,
+        });
+      } catch {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        });
+      }
 
       streamRef.current = stream;
 
@@ -43,11 +52,14 @@ export function useCameraFeed(): UseCameraFeedResult {
         videoRef.current.srcObject = stream;
         videoRef.current.muted = true;
         videoRef.current.playsInline = true;
+        videoRef.current.setAttribute("playsinline", "true");
+        videoRef.current.setAttribute("webkit-playsinline", "true");
         
         await videoRef.current.play();
         setState("active");
       }
     } catch (err: any) {
+      console.error("Camera error:", err);
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
         setState("denied");
         setError("Camera permission denied");
@@ -71,6 +83,8 @@ export function useCameraFeed(): UseCameraFeedResult {
     video.muted = true;
     video.playsInline = true;
     video.autoplay = true;
+    video.setAttribute("playsinline", "true");
+    video.setAttribute("webkit-playsinline", "true");
     video.style.display = "none";
     document.body.appendChild(video);
     videoRef.current = video;
