@@ -195,7 +195,7 @@ function HeightInput({
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={onBack}
-            className="w-11 h-11 rounded-full bg-[#1f1c18]/80 backdrop-blur-xl border border-[#3d3630]/50 flex items-center justify-center"
+            className="w-12 h-12 rounded-full liquid-glass flex items-center justify-center"
           >
             <svg className="w-5 h-5 text-[#e8e0d5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
@@ -307,7 +307,7 @@ function HeightInput({
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={handleSubmit}
-            className="w-full py-4 btn-primary rounded-2xl font-semibold text-base"
+            className="w-full py-5 liquid-glass-primary rounded-[20px] font-semibold text-base text-[#0a0908] transition-all duration-300"
           >
             Continue
           </motion.button>
@@ -361,7 +361,7 @@ function CaptureInstructions({ onStart }: { onStart: () => void }) {
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={onStart}
-          className="w-full max-w-sm py-4 btn-primary rounded-xl font-medium text-base"
+          className="w-full max-w-sm py-5 liquid-glass-primary rounded-[20px] font-semibold text-base text-[#0a0908] transition-all duration-300"
         >
           Start Capture
         </motion.button>
@@ -469,7 +469,7 @@ function AngleCapture({
         <p className="text-[#9c8f78] text-center mb-8 max-w-sm">{cameraError}</p>
         <button
           onClick={onClose}
-          className="px-8 py-3 rounded-xl bg-[#c4a77d] text-[#0a0a0f] font-medium hover:bg-[#d4b78d] transition-colors"
+          className="px-10 py-4 liquid-glass-primary rounded-[18px] text-[#0a0a0f] font-semibold transition-all duration-300"
         >
           Go Back
         </button>
@@ -499,7 +499,7 @@ function AngleCapture({
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={onClose}
-              className="w-11 h-11 rounded-full bg-[#1f1c18]/80 backdrop-blur-xl border border-[#3d3630]/50 flex items-center justify-center pointer-events-auto"
+              className="w-12 h-12 rounded-full liquid-glass flex items-center justify-center pointer-events-auto"
             >
               <svg className="w-5 h-5 text-[#e8e0d5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
