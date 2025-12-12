@@ -5,3 +5,5 @@ declare global {
     interface IntrinsicElements extends ThreeElements {}
   }
 }
+
+export {};
