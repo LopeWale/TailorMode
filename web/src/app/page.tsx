@@ -179,7 +179,7 @@ export default function Home() {
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="flex flex-col items-center gap-3"
+                className="flex flex-col items-center gap-3 mb-12"
               >
                 <motion.button
                   whileHover={{ scale: 1.02 }}

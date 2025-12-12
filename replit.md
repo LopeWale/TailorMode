@@ -183,3 +183,15 @@ web/
 - Fixed critical data flow: captured imagery now flows through reconstruct -> compute-measurements pipeline
 - Added capture-instructions API for view-specific guidance
 - Added interpret-measurements API for AI garment-to-measurement mapping
+
+### December 2024 - UI Polish
+- Fixed home page button spacing - added margin between buttons and footer section
+- Complete MeasurementSelector redesign with Apple 2025 Liquid Glass styling:
+  - Glass-styled back button with proper visual hierarchy
+  - Liquid glass cards for preset/custom selection options
+  - Icon boxes with warm tan accent color
+  - Navigation chevrons for visual guidance
+  - Glass-styled textarea for custom garment input
+  - Tips section with styled bullet points
+  - Smooth Framer Motion animations throughout
+  - Proper safe-area handling for mobile devices
