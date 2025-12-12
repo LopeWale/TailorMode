@@ -4,7 +4,7 @@ import { useState, useCallback, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 
-const HumanModel = dynamic(() => import("@/components/HumanModel"), {
+const PhotoboothGlassBox = dynamic(() => import("@/components/PhotoboothGlassBox"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center">
@@ -146,7 +146,7 @@ export default function Home() {
                     <div className="w-10 h-10 border-2 border-[#c4a77d] border-t-transparent rounded-full animate-spin" />
                   </div>
                 }>
-                  <HumanModel measurements={[]} activeMeasurement={null} isInteractive={true} />
+                  <PhotoboothGlassBox />
                 </Suspense>
               </motion.div>
 
@@ -313,26 +313,42 @@ export default function Home() {
             </header>
 
             <div className="flex-1 flex flex-col">
-              <div className="h-[40vh] min-h-[280px] relative">
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0f0e0c] pointer-events-none z-10" />
-                <Suspense fallback={
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div className="w-10 h-10 border-2 border-[#c4a77d] border-t-transparent rounded-full animate-spin" />
+              <div className="px-4 pt-4">
+                <div className="surface-elevated rounded-2xl p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#c4a77d]/10 flex items-center justify-center">
+                        <svg className="w-5 h-5 text-[#c4a77d]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-[#faf9f7] font-medium text-sm">Scan Complete</p>
+                        <p className="text-[#78716c] text-xs">{analysisResult.measurements.length} measurements captured</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[#c4a77d] font-semibold">{analysisResult.qcScore}%</p>
+                      <p className="text-[#57534e] text-[10px]">accuracy</p>
+                    </div>
                   </div>
-                }>
-                  <HumanModel
-                    measurements={formattedMeasurements}
-                    activeMeasurement={activeMeasurement}
-                    onMeasurementComplete={handleMeasurementComplete}
-                  />
-                </Suspense>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    {analysisResult.measurements.slice(0, 4).map((m, i) => (
+                      <div key={i} className="bg-[#1f1c18]/50 rounded-lg p-3">
+                        <p className="text-[#78716c] text-[10px] uppercase tracking-wider">{m.name}</p>
+                        <p className="text-[#faf9f7] font-semibold text-lg">{m.value}<span className="text-[#78716c] text-xs ml-1">{m.unit}</span></p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <motion.div
                 initial={{ y: 60 }}
                 animate={{ y: 0 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="flex-1 px-4 pb-4 space-y-4 -mt-8 relative z-20"
+                className="flex-1 px-4 pb-4 space-y-4 pt-4"
               >
                 {analysisResult.warnings.length > 0 && (
                   <motion.div
