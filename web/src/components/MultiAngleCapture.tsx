@@ -307,7 +307,7 @@ function HeightInput({
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={handleSubmit}
-            className="w-full py-5 liquid-glass-primary rounded-[20px] font-semibold text-base text-[#0a0908] transition-all duration-300"
+            className="w-full py-[18px] liquid-glass-primary rounded-[20px] font-semibold text-base text-[#0a0908] transition-all duration-300"
           >
             Continue
           </motion.button>
@@ -361,7 +361,7 @@ function CaptureInstructions({ onStart }: { onStart: () => void }) {
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={onStart}
-          className="w-full max-w-sm py-5 liquid-glass-primary rounded-[20px] font-semibold text-base text-[#0a0908] transition-all duration-300"
+          className="w-full max-w-sm py-[18px] liquid-glass-primary rounded-[20px] font-semibold text-base text-[#0a0908] transition-all duration-300"
         >
           Start Capture
         </motion.button>
@@ -469,7 +469,7 @@ function AngleCapture({
         <p className="text-[#9c8f78] text-center mb-8 max-w-sm">{cameraError}</p>
         <button
           onClick={onClose}
-          className="px-10 py-4 liquid-glass-primary rounded-[18px] text-[#0a0a0f] font-semibold transition-all duration-300"
+          className="px-10 py-[16px] liquid-glass-primary rounded-[18px] text-[#0a0a0f] font-semibold transition-all duration-300"
         >
           Go Back
         </button>

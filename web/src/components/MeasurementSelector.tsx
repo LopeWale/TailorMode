@@ -169,7 +169,7 @@ export function MeasurementSelector({ onSelectionComplete, onBack }: Measurement
             <div className="space-y-4">
               <button
                 onClick={() => setMode("preset")}
-                className="w-full p-5 rounded-[20px] liquid-glass-secondary flex items-center gap-4 transition-all duration-300"
+                className="w-full p-[20px] rounded-[20px] liquid-glass-secondary flex items-center gap-4 transition-all duration-300"
               >
                 <div className="w-12 h-12 rounded-lg bg-[#c4a77d]/20 flex items-center justify-center text-[#c4a77d]">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
@@ -187,7 +187,7 @@ export function MeasurementSelector({ onSelectionComplete, onBack }: Measurement
               
               <button
                 onClick={() => setMode("custom")}
-                className="w-full p-5 rounded-[20px] liquid-glass-secondary flex items-center gap-4 transition-all duration-300"
+                className="w-full p-[20px] rounded-[20px] liquid-glass-secondary flex items-center gap-4 transition-all duration-300"
               >
                 <div className="w-12 h-12 rounded-lg bg-[#c4a77d]/20 flex items-center justify-center text-[#c4a77d]">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
@@ -292,7 +292,7 @@ export function MeasurementSelector({ onSelectionComplete, onBack }: Measurement
             <button
               onClick={handleCustomSubmit}
               disabled={!customDescription.trim()}
-              className="mt-6 w-full py-5 rounded-[20px] liquid-glass-primary text-[#0a0a0f] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+              className="mt-6 w-full py-[18px] rounded-[20px] liquid-glass-primary text-[#0a0a0f] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
             >
               Analyze Requirements
             </button>
@@ -416,7 +416,7 @@ export function MeasurementSelector({ onSelectionComplete, onBack }: Measurement
               <div className="max-w-md mx-auto">
                 <button
                   onClick={handleConfirmSelection}
-                  className="w-full py-5 rounded-[20px] liquid-glass-primary text-[#0a0a0f] font-semibold transition-all duration-300"
+                  className="w-full py-[18px] rounded-[20px] liquid-glass-primary text-[#0a0a0f] font-semibold transition-all duration-300"
                 >
                   Start Capture ({aiAnalysis.requiredMeasurements.length + includedOptional.size} measurements)
                 </button>
