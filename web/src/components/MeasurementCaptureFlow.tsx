@@ -127,12 +127,35 @@ export function MeasurementCaptureFlow({ onComplete, onBack, heightInCm }: Measu
         ...selection.optionalMeasurements.map(m => m.id),
       ] : [];
       
+      const reconstructResponse = await fetch("/api/reconstruct", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          frames: captureData.frames,
+          height: captureData.height,
+          deviceInfo: captureData.deviceInfo,
+        }),
+      });
+      
+      let meshData = null;
+      let landmarks = null;
+      
+      if (reconstructResponse.ok) {
+        const reconstructResult = await reconstructResponse.json();
+        if (reconstructResult.success) {
+          meshData = reconstructResult.meshData || null;
+          landmarks = reconstructResult.landmarks || null;
+        }
+      }
+      
       const response = await fetch("/api/compute-measurements", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           measurementIds,
           heightInCm: captureData.height,
+          meshData,
+          landmarks,
           previousResults: results,
         }),
       });

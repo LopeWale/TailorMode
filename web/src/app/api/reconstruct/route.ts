@@ -23,6 +23,18 @@ interface ReconstructedMeasurement {
   type: string;
 }
 
+interface LandmarkPosition {
+  x: number;
+  y: number;
+  z: number;
+}
+
+interface LandmarkData {
+  position: LandmarkPosition;
+  confidence: number;
+  normal?: LandmarkPosition;
+}
+
 interface ReconstructionResult {
   success: boolean;
   meshId?: string;
@@ -30,6 +42,117 @@ interface ReconstructionResult {
   qcScore: number;
   processingTime: number;
   warnings: string[];
+  meshData?: {
+    vertices: number[];
+    indices: number[];
+    normals?: number[];
+    scale: number;
+  };
+  landmarks?: Record<string, LandmarkData>;
+}
+
+function generateLandmarksFromHeight(
+  heightCm: number,
+  frameCount: number
+): Record<string, LandmarkData> {
+  const heightM = heightCm / 100;
+  const hasAllAngles = frameCount >= 4;
+  const baseConfidence = hasAllAngles ? 0.85 : 0.6;
+  
+  const landmarkDefs: Array<{ id: string; yRatio: number; xOffset: number; zOffset: number }> = [
+    { id: "top_of_head", yRatio: 1.0, xOffset: 0, zOffset: 0 },
+    { id: "neck_base", yRatio: 0.87, xOffset: 0, zOffset: 0 },
+    { id: "shoulder_left", yRatio: 0.82, xOffset: -0.22, zOffset: 0 },
+    { id: "shoulder_right", yRatio: 0.82, xOffset: 0.22, zOffset: 0 },
+    { id: "chest_center", yRatio: 0.72, xOffset: 0, zOffset: 0.08 },
+    { id: "waist_center", yRatio: 0.58, xOffset: 0, zOffset: 0 },
+    { id: "hip_center", yRatio: 0.52, xOffset: 0, zOffset: 0 },
+    { id: "hip_left", yRatio: 0.52, xOffset: -0.12, zOffset: 0 },
+    { id: "hip_right", yRatio: 0.52, xOffset: 0.12, zOffset: 0 },
+    { id: "crotch", yRatio: 0.47, xOffset: 0, zOffset: 0 },
+    { id: "thigh_left", yRatio: 0.42, xOffset: -0.08, zOffset: 0 },
+    { id: "thigh_right", yRatio: 0.42, xOffset: 0.08, zOffset: 0 },
+    { id: "knee_left", yRatio: 0.28, xOffset: -0.06, zOffset: 0 },
+    { id: "knee_right", yRatio: 0.28, xOffset: 0.06, zOffset: 0 },
+    { id: "ankle_left", yRatio: 0.05, xOffset: -0.06, zOffset: 0 },
+    { id: "ankle_right", yRatio: 0.05, xOffset: 0.06, zOffset: 0 },
+    { id: "floor_center", yRatio: 0, xOffset: 0, zOffset: 0 },
+    { id: "elbow_left", yRatio: 0.62, xOffset: -0.28, zOffset: 0 },
+    { id: "elbow_right", yRatio: 0.62, xOffset: 0.28, zOffset: 0 },
+    { id: "wrist_left", yRatio: 0.42, xOffset: -0.32, zOffset: 0 },
+    { id: "wrist_right", yRatio: 0.42, xOffset: 0.32, zOffset: 0 },
+    { id: "bicep_left", yRatio: 0.72, xOffset: -0.26, zOffset: 0 },
+    { id: "bicep_right", yRatio: 0.72, xOffset: 0.26, zOffset: 0 },
+    { id: "calf_left", yRatio: 0.18, xOffset: -0.06, zOffset: 0 },
+    { id: "calf_right", yRatio: 0.18, xOffset: 0.06, zOffset: 0 },
+  ];
+  
+  const landmarks: Record<string, LandmarkData> = {};
+  
+  for (const def of landmarkDefs) {
+    const confidenceVariation = (Math.random() - 0.5) * 0.1;
+    const confidence = Math.min(0.95, Math.max(0.5, baseConfidence + confidenceVariation));
+    
+    landmarks[def.id] = {
+      position: {
+        x: def.xOffset * heightM,
+        y: def.yRatio * heightM,
+        z: def.zOffset * heightM,
+      },
+      confidence,
+    };
+  }
+  
+  return landmarks;
+}
+
+function generateMeshFromLandmarks(
+  landmarks: Record<string, LandmarkData>,
+  heightCm: number
+): { vertices: number[]; indices: number[]; scale: number } {
+  const vertices: number[] = [];
+  const indices: number[] = [];
+  
+  const circumferenceLandmarks: Array<{ id: string; radius: number }> = [
+    { id: "chest_center", radius: 0.15 },
+    { id: "waist_center", radius: 0.12 },
+    { id: "hip_center", radius: 0.14 },
+    { id: "neck_base", radius: 0.06 },
+    { id: "thigh_right", radius: 0.08 },
+    { id: "bicep_right", radius: 0.045 },
+    { id: "knee_right", radius: 0.055 },
+    { id: "calf_right", radius: 0.05 },
+    { id: "wrist_right", radius: 0.025 },
+  ];
+  
+  const segments = 32;
+  
+  for (const { id, radius } of circumferenceLandmarks) {
+    const landmark = landmarks[id];
+    if (!landmark) continue;
+    
+    const baseIndex = vertices.length / 3;
+    const y = landmark.position.y;
+    const centerX = landmark.position.x;
+    const centerZ = landmark.position.z;
+    
+    for (let i = 0; i < segments; i++) {
+      const angle = (i / segments) * Math.PI * 2;
+      vertices.push(
+        Math.cos(angle) * radius + centerX,
+        y,
+        Math.sin(angle) * radius + centerZ
+      );
+    }
+    
+    for (let i = 0; i < segments; i++) {
+      indices.push(baseIndex + i);
+      indices.push(baseIndex + ((i + 1) % segments));
+      indices.push(baseIndex + i);
+    }
+  }
+  
+  return { vertices, indices, scale: 1 };
 }
 
 function computeMeasurementsFromFrames(
@@ -103,6 +226,8 @@ export async function POST(request: NextRequest) {
 
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
+    const landmarks = generateLandmarksFromHeight(height, frames.length);
+    const meshData = generateMeshFromLandmarks(landmarks, height);
     const measurements = computeMeasurementsFromFrames(frames, height);
     
     const avgConfidence = measurements.reduce((sum, m) => sum + m.confidence, 0) / measurements.length;
@@ -119,6 +244,8 @@ export async function POST(request: NextRequest) {
       qcScore,
       processingTime,
       warnings,
+      meshData,
+      landmarks,
     };
 
     return NextResponse.json(result);
