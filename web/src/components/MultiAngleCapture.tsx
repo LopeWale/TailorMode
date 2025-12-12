@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 
 interface MultiAngleCaptureProps {
   onCaptureComplete: (captures: CaptureData) => void;
@@ -32,6 +32,101 @@ const CAPTURE_ANGLES = [
 
 type CaptureStep = "height" | "instructions" | "capture" | "processing";
 
+function ScrollWheel({ 
+  values, 
+  selectedValue, 
+  onChange,
+  suffix,
+}: { 
+  values: number[];
+  selectedValue: number;
+  onChange: (value: number) => void;
+  suffix?: string;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const itemHeight = 56;
+  const visibleItems = 5;
+  const centerOffset = Math.floor(visibleItems / 2);
+  
+  const selectedIndex = values.indexOf(selectedValue);
+  const scrollY = useMotionValue(-selectedIndex * itemHeight);
+
+  useEffect(() => {
+    const newIndex = values.indexOf(selectedValue);
+    animate(scrollY, -newIndex * itemHeight, { type: "spring", stiffness: 300, damping: 30 });
+  }, [selectedValue, values, scrollY, itemHeight]);
+
+  const handleDrag = useCallback((_: any, info: { offset: { y: number }; velocity: { y: number } }) => {
+    const currentY = scrollY.get();
+    const newY = currentY + info.velocity.y * 0.1;
+    const newIndex = Math.round(-newY / itemHeight);
+    const clampedIndex = Math.max(0, Math.min(values.length - 1, newIndex));
+    onChange(values[clampedIndex]);
+  }, [scrollY, itemHeight, values, onChange]);
+
+  return (
+    <div className="relative h-[280px] overflow-hidden">
+      <div 
+        className="absolute inset-0 pointer-events-none z-10"
+        style={{
+          background: `linear-gradient(to bottom, 
+            #0a0908 0%, 
+            transparent 35%, 
+            transparent 65%, 
+            #0a0908 100%
+          )`,
+        }}
+      />
+      
+      <div 
+        className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[56px] pointer-events-none z-5"
+        style={{
+          background: "linear-gradient(90deg, transparent, rgba(196,167,125,0.1), transparent)",
+          borderTop: "1px solid rgba(196,167,125,0.2)",
+          borderBottom: "1px solid rgba(196,167,125,0.2)",
+        }}
+      />
+
+      <motion.div
+        ref={containerRef}
+        drag="y"
+        dragConstraints={{ 
+          top: -(values.length - 1) * itemHeight, 
+          bottom: 0 
+        }}
+        dragElastic={0.1}
+        onDragEnd={handleDrag}
+        style={{ y: scrollY }}
+        className="absolute left-0 right-0"
+        initial={false}
+      >
+        <div style={{ height: centerOffset * itemHeight }} />
+        {values.map((value, index) => {
+          const isSelected = value === selectedValue;
+          return (
+            <motion.div
+              key={value}
+              onClick={() => onChange(value)}
+              className="h-[56px] flex items-center justify-center cursor-pointer"
+            >
+              <span 
+                className={`text-3xl font-light transition-all duration-200 ${
+                  isSelected 
+                    ? "text-[#faf9f7] scale-110" 
+                    : "text-[#78716c]/60 scale-90"
+                }`}
+              >
+                {value}{suffix && <span className="text-lg ml-1 text-[#c4a77d]/60">{suffix}</span>}
+              </span>
+            </motion.div>
+          );
+        })}
+        <div style={{ height: centerOffset * itemHeight }} />
+      </motion.div>
+    </div>
+  );
+}
+
 function HeightInput({ 
   onSubmit, 
   onBack 
@@ -39,22 +134,38 @@ function HeightInput({
   onSubmit: (height: number) => void;
   onBack: () => void;
 }) {
-  const [height, setHeight] = useState("");
-  const [unit, setUnit] = useState<"cm" | "ft">( "cm");
+  const [unit, setUnit] = useState<"cm" | "ft">("cm");
+  const [heightCm, setHeightCm] = useState(170);
+  const [feet, setFeet] = useState(5);
+  const [inches, setInches] = useState(7);
+
+  const cmValues = Array.from({ length: 121 }, (_, i) => 120 + i);
+  const feetValues = Array.from({ length: 5 }, (_, i) => 4 + i);
+  const inchValues = Array.from({ length: 12 }, (_, i) => i);
+
+  useEffect(() => {
+    if (unit === "ft") {
+      const totalInches = Math.round(heightCm / 2.54);
+      setFeet(Math.floor(totalInches / 12));
+      setInches(totalInches % 12);
+    }
+  }, [unit, heightCm]);
+
+  useEffect(() => {
+    if (unit === "ft") {
+      setHeightCm(Math.round((feet * 12 + inches) * 2.54));
+    }
+  }, [feet, inches, unit]);
 
   const handleSubmit = () => {
-    let heightCm = parseFloat(height);
-    if (unit === "ft") {
-      const parts = height.split("'");
-      const feet = parseInt(parts[0]) || 0;
-      const inches = parseInt(parts[1]?.replace('"', '')) || 0;
-      heightCm = (feet * 30.48) + (inches * 2.54);
-    }
-    
     if (heightCm >= 100 && heightCm <= 250) {
       onSubmit(heightCm);
     }
   };
+
+  const displayHeight = unit === "cm" 
+    ? `${heightCm} cm` 
+    : `${feet}'${inches}"`;
 
   return (
     <motion.div
@@ -79,60 +190,108 @@ function HeightInput({
         </div>
       </header>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6">
-        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#c4a77d]/20 to-[#9c8f78]/10 flex items-center justify-center mb-8">
-          <svg className="w-10 h-10 text-[#c4a77d]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605" />
-          </svg>
+      <div className="flex-1 flex flex-col px-6 pt-4 pb-8">
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#c4a77d]/20 to-[#9c8f78]/10 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-[#c4a77d]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-semibold text-[#faf9f7] mb-2">Your Height</h2>
+          <p className="text-[#78716c] text-sm max-w-xs mx-auto">
+            Scroll to select your height for accurate measurements
+          </p>
         </div>
 
-        <h2 className="text-2xl font-semibold text-[#faf9f7] mb-3 text-center">Enter Your Height</h2>
-        <p className="text-[#78716c] text-sm text-center mb-8 max-w-xs">
-          Your height is used to calibrate measurements for accurate results
-        </p>
+        <div className="flex gap-2 p-1 bg-[#1f1c18] rounded-xl mb-4 max-w-xs mx-auto w-full">
+          <button
+            onClick={() => setUnit("cm")}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+              unit === "cm" 
+                ? "bg-[#c4a77d] text-[#1f1c18] shadow-lg" 
+                : "text-[#78716c] hover:text-[#a8a29e]"
+            }`}
+          >
+            Centimeters
+          </button>
+          <button
+            onClick={() => setUnit("ft")}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+              unit === "ft" 
+                ? "bg-[#c4a77d] text-[#1f1c18] shadow-lg" 
+                : "text-[#78716c] hover:text-[#a8a29e]"
+            }`}
+          >
+            Feet & Inches
+          </button>
+        </div>
 
-        <div className="w-full max-w-xs space-y-4">
-          <div className="flex gap-2 p-1 bg-[#1f1c18] rounded-xl">
-            <button
-              onClick={() => setUnit("cm")}
-              className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors ${
-                unit === "cm" 
-                  ? "bg-[#c4a77d] text-[#1f1c18]" 
-                  : "text-[#78716c]"
-              }`}
-            >
-              Centimeters
-            </button>
-            <button
-              onClick={() => setUnit("ft")}
-              className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors ${
-                unit === "ft" 
-                  ? "bg-[#c4a77d] text-[#1f1c18]" 
-                  : "text-[#78716c]"
-              }`}
-            >
-              Feet & Inches
-            </button>
-          </div>
+        <div className="flex-1 flex items-center justify-center">
+          <AnimatePresence mode="wait">
+            {unit === "cm" ? (
+              <motion.div
+                key="cm"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="w-full max-w-[200px]"
+              >
+                <ScrollWheel
+                  values={cmValues}
+                  selectedValue={heightCm}
+                  onChange={setHeightCm}
+                  suffix="cm"
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="ft"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="flex gap-4 items-center"
+              >
+                <div className="w-[100px]">
+                  <ScrollWheel
+                    values={feetValues}
+                    selectedValue={feet}
+                    onChange={setFeet}
+                    suffix="ft"
+                  />
+                </div>
+                <div className="text-[#c4a77d]/40 text-2xl font-light">:</div>
+                <div className="w-[100px]">
+                  <ScrollWheel
+                    values={inchValues}
+                    selectedValue={inches}
+                    onChange={setInches}
+                    suffix="in"
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-          <div className="relative">
-            <input
-              type="text"
-              value={height}
-              onChange={(e) => setHeight(e.target.value)}
-              placeholder={unit === "cm" ? "e.g., 175" : "e.g., 5'10\""}
-              className="w-full py-4 px-4 bg-[#1f1c18] border border-[#3d3630] rounded-xl text-[#faf9f7] text-lg text-center focus:outline-none focus:border-[#c4a77d] transition-colors"
-            />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#78716c]">
-              {unit === "cm" ? "cm" : ""}
-            </span>
+        <div className="mt-auto space-y-4">
+          <div className="text-center">
+            <motion.div 
+              key={displayHeight}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#1f1c18] rounded-full border border-[#3d3630]/50"
+            >
+              <svg className="w-4 h-4 text-[#c4a77d]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-[#faf9f7] font-medium">{displayHeight}</span>
+            </motion.div>
           </div>
 
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={handleSubmit}
-            disabled={!height}
-            className="w-full py-4 btn-primary rounded-xl font-medium text-base disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-4 btn-primary rounded-xl font-medium text-base"
           >
             Continue
           </motion.button>
