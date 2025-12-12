@@ -113,57 +113,95 @@ export default function PhotoboothGlassBox({ className }: PhotoboothGlassBoxProp
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="relative w-[200px] h-[280px] rounded-[20px] overflow-hidden cursor-pointer"
+        className="relative cursor-pointer"
         onClick={() => {
           if (cameraState !== "active") {
             startCamera();
           }
         }}
-        style={{
-          background: "linear-gradient(145deg, #f5f3f0, #e8e4df)",
-          boxShadow: `
-            0 25px 50px -12px rgba(0, 0, 0, 0.25),
-            0 0 0 1px rgba(255, 255, 255, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.6),
-            inset 0 -1px 0 rgba(0, 0, 0, 0.1)
-          `,
-        }}
       >
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{
-            transform: "scaleX(-1)",
-            filter: "blur(12px) brightness(1.1) saturate(0.9)",
-            opacity: isActive ? 0.55 : 0,
-            transition: "opacity 0.5s ease",
-          }}
-        />
-
         <div 
-          className="absolute inset-0 pointer-events-none"
+          className="relative w-[180px] h-[260px] rounded-[16px] overflow-hidden"
           style={{
-            background: isActive 
-              ? "linear-gradient(145deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.08) 50%, rgba(0,0,0,0.03) 100%)"
-              : "linear-gradient(145deg, rgba(255,255,255,0.4) 0%, rgba(240,236,230,0.8) 50%, rgba(220,216,210,0.9) 100%)",
-            transition: "background 0.5s ease",
+            background: "#1a1816",
+            boxShadow: `
+              0 30px 60px -15px rgba(0, 0, 0, 0.5),
+              0 0 0 1px rgba(196, 167, 125, 0.15),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05)
+            `,
           }}
-        />
+        >
+          <div 
+            className="absolute inset-[6px] rounded-[12px] overflow-hidden"
+            style={{
+              background: "linear-gradient(145deg, #2a2520, #1f1c18)",
+              boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)",
+            }}
+          >
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{
+                transform: "scaleX(-1)",
+                filter: "blur(6px) brightness(0.9) contrast(1.1) saturate(0.85)",
+                opacity: isActive ? 0.7 : 0,
+                transition: "opacity 0.5s ease",
+              }}
+            />
+
+            <div 
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: isActive 
+                  ? "linear-gradient(145deg, rgba(196,167,125,0.08) 0%, transparent 40%, rgba(0,0,0,0.2) 100%)"
+                  : "linear-gradient(145deg, rgba(42,37,32,0.9) 0%, rgba(31,28,24,1) 100%)",
+                transition: "background 0.5s ease",
+              }}
+            />
+
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.15) 100%)",
+              }}
+            />
+          </div>
+
+          <div
+            className="absolute top-[10px] left-1/2 -translate-x-1/2 w-[8px] h-[8px] rounded-full"
+            style={{
+              background: isActive 
+                ? "radial-gradient(circle, #c4a77d 0%, #9c8f78 100%)"
+                : "radial-gradient(circle, #3d3630 0%, #2a2520 100%)",
+              boxShadow: isActive ? "0 0 8px rgba(196, 167, 125, 0.5)" : "none",
+              transition: "all 0.3s ease",
+            }}
+          />
+
+          <div
+            className="absolute bottom-[10px] left-1/2 -translate-x-1/2 flex gap-1"
+          >
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="w-[4px] h-[4px] rounded-full"
+                style={{
+                  background: i === 1 && isActive ? "#c4a77d" : "#3d3630",
+                  transition: "background 0.3s ease",
+                }}
+              />
+            ))}
+          </div>
+        </div>
 
         <div
-          className="absolute inset-0 pointer-events-none"
+          className="absolute -inset-[3px] rounded-[19px] pointer-events-none"
           style={{
-            background: "linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.05) 100%)",
-          }}
-        />
-
-        <div
-          className="absolute inset-[1px] rounded-[19px] pointer-events-none"
-          style={{
-            boxShadow: "inset 0 1px 2px rgba(255,255,255,0.5), inset 0 -1px 1px rgba(0,0,0,0.08)",
+            background: "linear-gradient(145deg, rgba(196,167,125,0.2) 0%, transparent 50%, rgba(196,167,125,0.1) 100%)",
+            opacity: 0.5,
           }}
         />
 
@@ -173,10 +211,10 @@ export default function PhotoboothGlassBox({ className }: PhotoboothGlassBoxProp
           </div>
         )}
 
-        {(cameraState === "denied" || cameraState === "error" || cameraState === "idle") && (
+        {(cameraState === "denied" || cameraState === "error" || cameraState === "idle") && !isActive && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-[#78716c]/60 text-[10px] text-center px-4">
-              {cameraState === "denied" ? "Tap to enable camera" : "Tap to activate"}
+            <p className="text-[#c4a77d]/40 text-[10px] text-center px-4">
+              Tap to activate
             </p>
           </div>
         )}
