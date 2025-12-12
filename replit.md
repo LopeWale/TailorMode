@@ -44,12 +44,26 @@ Gemini is used ONLY as a **measurement assistant for tailors** - NOT for analyzi
 - Three.js 3D mesh viewer with orbit controls and landmarks (MeshViewer.tsx)
 - Measurement assistant chat panel (MeasurementChat.tsx)
 - 3D viewer page at /viewer with mesh visualization and chat
+- **NEW: Tailor Measurements Flow** (/measure page):
+  - MeasurementSelector: Preset clothing picker OR AI-generated custom measurements
+  - MeasurementCaptureFlow: Full orchestration of selection → instructions → capture → processing → results
+  - Clothing presets: Shirt, Pants, Dress, Jacket, Skirt, Vest with required/optional measurements
+  - AI measurement interpreter: Gemini interprets natural language garment descriptions
+  - Geometry service: Geodesic distance, planar slice circumference, SMPL landmarks
+  - Confidence scoring with re-capture triggers and auto-flag after 3 attempts
 
-### Backend Infrastructure Needed
-- **Photogrammetry service**: COLMAP, Meshroom, or cloud API (Polycam, etc.)
+### API Endpoints
+- `/api/reconstruct` - 3D reconstruction from captured frames, returns mesh + landmarks
+- `/api/compute-measurements` - Computes measurements from mesh/landmarks with validation
+- `/api/capture-instructions` - Generates capture guidance for selected measurements
+- `/api/interpret-measurements` - AI-powered garment description to measurement mapping
+- `/api/chat` - Gemini measurement assistant for tailor queries
+
+### Backend Infrastructure Needed (for Production)
+- **Real photogrammetry service**: COLMAP, Meshroom, or cloud API (Polycam, etc.)
 - **SMPL fitting service**: Python with PyTorch for body model fitting
 - **Mesh storage**: Regional S3/GCS with client-side encryption
-- **Measurement computation**: trimesh/Open3D/libigl for geodesics, circumferences
+- **Production measurement computation**: trimesh/Open3D/libigl for true geodesics
 
 ### UI/UX Status
 - Home screen: PhotoboothGlassBox with camera reflections (glass material + ambient light)
@@ -71,22 +85,32 @@ web/
 ├── src/
 │   ├── app/
 │   │   ├── api/
-│   │   │   ├── chat/              # Gemini measurement assistant
-│   │   │   ├── reconstruct/       # 3D reconstruction endpoint (needs backend integration)
+│   │   │   ├── chat/                    # Gemini measurement assistant
+│   │   │   ├── reconstruct/             # 3D reconstruction with mesh/landmarks
+│   │   │   ├── compute-measurements/    # Measurement computation with validation
+│   │   │   ├── capture-instructions/    # Generates capture guidance
+│   │   │   ├── interpret-measurements/  # AI garment → measurements mapping
 │   │   │   └── auth/, login/, etc.
+│   │   ├── measure/                     # Tailor measurement flow page
+│   │   ├── viewer/                      # 3D mesh viewer page
 │   │   ├── globals.css
 │   │   ├── layout.tsx
-│   │   └── page.tsx               # Main app with multi-angle capture flow
+│   │   └── page.tsx                     # Main app with multi-angle capture flow
 │   ├── components/
-│   │   ├── MultiAngleCapture.tsx  # 4-angle guided capture with interactive height picker
-│   │   ├── PhotoboothGlassBox.tsx # Glass photobooth with camera reflections (home screen)
-│   │   ├── MeshViewer.tsx         # Three.js 3D body model viewer with landmarks
-│   │   ├── MeasurementChat.tsx    # AI measurement assistant chat panel
+│   │   ├── MultiAngleCapture.tsx        # 4-angle guided capture with height picker
+│   │   ├── MeasurementCaptureFlow.tsx   # Complete measurement flow orchestration
+│   │   ├── MeasurementSelector.tsx      # Preset/custom measurement selection UI
+│   │   ├── PhotoboothGlassBox.tsx       # Glass photobooth (home screen)
+│   │   ├── MeshViewer.tsx               # Three.js 3D body model viewer
+│   │   ├── MeasurementChat.tsx          # AI measurement assistant chat
 │   │   └── MeasurementProgress.tsx
 │   ├── hooks/
-│   │   └── useCameraFeed.ts       # Camera stream management hook
+│   │   └── useCameraFeed.ts             # Camera stream management hook
 │   └── lib/
-│       ├── measurement-service.ts # Gemini NLP → Measurement DSL
+│       ├── measurement-types.ts         # Clothing presets and measurement definitions
+│       ├── geometry-service.ts          # Geodesic/circumference algorithms
+│       ├── ai-measurement-interpreter.ts # Gemini garment interpretation
+│       ├── measurement-service.ts       # Gemini NLP → Measurement DSL
 │       └── prisma.ts
 ├── prisma/
 │   └── schema.prisma
@@ -131,3 +155,16 @@ web/
 - Improved height picker layout centering and spacing
 - Added "View 3D Model" link on results screen to navigate to /viewer
 - Fixed camera stream cleanup using ref to prevent memory leaks
+
+### December 2024 - Tailor Measurement Flow
+- Created clothing presets data model (measurement-types.ts) with 6 garment types
+- Built AI measurement interpreter using Gemini to map natural language garment descriptions
+- Created MeasurementSelector UI for preset selection or custom AI-generated measurements
+- Implemented geometry-service.ts with geodesic distance, planar slice circumference algorithms
+- Added confidence scoring, validation logic, and auto-flag after 3 recapture attempts
+- Built MeasurementCaptureFlow component for complete measurement workflow orchestration
+- Created /measure page with "Tailor Measurements" button on home screen
+- Updated reconstruct API to generate mesh data and SMPL landmarks from captures
+- Fixed critical data flow: captured imagery now flows through reconstruct -> compute-measurements pipeline
+- Added capture-instructions API for view-specific guidance
+- Added interpret-measurements API for AI garment-to-measurement mapping
