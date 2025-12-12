@@ -124,6 +124,10 @@ web/
 - Added useCameraFeed hook for camera stream management
 - Results screen now shows measurement grid with scan summary
 - Added interactive scroll wheel height picker (like iOS picker wheel)
-- Created Three.js MeshViewer component with 3D body model
-- Created MeasurementChat component with Gemini integration
+- Created Three.js MeshViewer component with 3D body model and GLTF loading
+- Created MeasurementChat component with Gemini integration and response validation
 - Added /viewer page with full tailor dashboard (mesh + measurements + chat)
+- Fixed camera to use front-facing (selfie) mode with mirrored preview
+- Improved height picker layout centering and spacing
+- Added "View 3D Model" link on results screen to navigate to /viewer
+- Fixed camera stream cleanup using ref to prevent memory leaks
