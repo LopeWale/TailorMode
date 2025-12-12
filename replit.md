@@ -49,9 +49,9 @@ Gemini is used ONLY as a **measurement assistant for tailors** - NOT for analyzi
 - **Measurement computation**: trimesh/Open3D/libigl for geodesics, circumferences
 
 ### UI/UX Status
-- Home screen: "3D Body Scanning" with "Start 3D Scan" button
+- Home screen: PhotoboothGlassBox with camera reflections (glass material + ambient light)
 - Capture flow: Height → Instructions → 4-angle capture → Processing
-- Results: 2D visualization placeholder (needs actual 3D mesh viewer)
+- Results: Measurement grid with scan summary and accuracy score
 
 ## Design System
 - **Color Palette**: Monochrome earth-tones (browns, tans, warm neutrals)
@@ -76,8 +76,10 @@ web/
 │   │   └── page.tsx               # Main app with multi-angle capture flow
 │   ├── components/
 │   │   ├── MultiAngleCapture.tsx  # 4-angle guided capture with height calibration
-│   │   ├── HumanModel.tsx         # 2D visualization (placeholder for 3D mesh)
+│   │   ├── PhotoboothGlassBox.tsx # Glass photobooth with camera reflections (home screen)
 │   │   └── MeasurementProgress.tsx
+│   ├── hooks/
+│   │   └── useCameraFeed.ts       # Camera stream management hook
 │   └── lib/
 │       ├── measurement-service.ts # Gemini NLP → Measurement DSL
 │       └── prisma.ts
@@ -113,3 +115,6 @@ web/
 - Created reconstruction API endpoint structure
 - Removed manual entry as primary flow
 - Updated home screen to "3D Body Scanning"
+- Replaced HumanModel with PhotoboothGlassBox (glass photobooth with camera reflections)
+- Added useCameraFeed hook for camera stream management
+- Results screen now shows measurement grid with scan summary
