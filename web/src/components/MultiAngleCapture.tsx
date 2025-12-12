@@ -206,20 +206,20 @@ function HeightInput({
         </div>
       </header>
 
-      <div className="flex-1 flex flex-col px-6 pt-4 pb-8">
-        <div className="text-center mb-6">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#c4a77d]/20 to-[#9c8f78]/10 flex items-center justify-center mx-auto mb-4">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 pt-4 pb-8">
+        <div className="text-center mb-8 w-full max-w-md mx-auto">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#c4a77d]/20 to-[#9c8f78]/10 flex items-center justify-center mx-auto mb-5">
             <svg className="w-8 h-8 text-[#c4a77d]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
             </svg>
           </div>
-          <h2 className="text-2xl font-semibold text-[#faf9f7] mb-2">Your Height</h2>
-          <p className="text-[#78716c] text-sm max-w-xs mx-auto">
+          <h2 className="text-2xl font-semibold text-[#faf9f7] mb-3">Your Height</h2>
+          <p className="text-[#78716c] text-sm max-w-[280px] mx-auto leading-relaxed">
             Scroll to select your height for accurate measurements
           </p>
         </div>
 
-        <div className="flex gap-2 p-1 bg-[#1f1c18] rounded-xl mb-4 max-w-xs mx-auto w-full">
+        <div className="flex gap-2 p-1.5 bg-[#1f1c18] rounded-xl mb-6 max-w-[320px] mx-auto w-full">
           <button
             onClick={() => setUnit("cm")}
             className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -242,7 +242,7 @@ function HeightInput({
           </button>
         </div>
 
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex items-center justify-center w-full max-w-md mx-auto py-4">
           <AnimatePresence mode="wait">
             {unit === "cm" ? (
               <motion.div
@@ -250,7 +250,7 @@ function HeightInput({
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
-                className="w-full max-w-[200px]"
+                className="w-full max-w-[240px]"
               >
                 <ScrollWheel
                   values={cmValues}
@@ -289,25 +289,25 @@ function HeightInput({
           </AnimatePresence>
         </div>
 
-        <div className="mt-auto space-y-4">
+        <div className="mt-8 space-y-5 w-full max-w-md mx-auto">
           <div className="text-center">
             <motion.div 
               key={displayHeight}
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#1f1c18] rounded-full border border-[#3d3630]/50"
+              className="inline-flex items-center gap-2.5 px-5 py-2.5 bg-[#1f1c18] rounded-full border border-[#3d3630]/50"
             >
               <svg className="w-4 h-4 text-[#c4a77d]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span className="text-[#faf9f7] font-medium">{displayHeight}</span>
+              <span className="text-[#faf9f7] font-medium text-base">{displayHeight}</span>
             </motion.div>
           </div>
 
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={handleSubmit}
-            className="w-full py-4 btn-primary rounded-xl font-medium text-base"
+            className="w-full py-4 btn-primary rounded-2xl font-semibold text-base"
           >
             Continue
           </motion.button>
@@ -394,7 +394,7 @@ function AngleCapture({
       try {
         const mediaStream = await navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: "environment",
+            facingMode: "user",
             width: { ideal: 1920 },
             height: { ideal: 1080 },
           },
@@ -456,6 +456,7 @@ function AngleCapture({
           playsInline
           muted
           className="absolute inset-0 w-full h-full object-cover"
+          style={{ transform: "scaleX(-1)" }}
         />
         <canvas ref={canvasRef} className="hidden" />
 
