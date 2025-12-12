@@ -138,24 +138,40 @@ function HeightInput({
   const [heightCm, setHeightCm] = useState(170);
   const [feet, setFeet] = useState(5);
   const [inches, setInches] = useState(7);
+  const lastChangedBy = useRef<"cm" | "ft" | null>(null);
 
   const cmValues = Array.from({ length: 121 }, (_, i) => 120 + i);
   const feetValues = Array.from({ length: 5 }, (_, i) => 4 + i);
   const inchValues = Array.from({ length: 12 }, (_, i) => i);
 
+  const handleCmChange = useCallback((value: number) => {
+    lastChangedBy.current = "cm";
+    setHeightCm(value);
+    const totalInches = Math.round(value / 2.54);
+    setFeet(Math.floor(totalInches / 12));
+    setInches(totalInches % 12);
+  }, []);
+
+  const handleFeetChange = useCallback((value: number) => {
+    lastChangedBy.current = "ft";
+    setFeet(value);
+    setHeightCm(Math.round((value * 12 + inches) * 2.54));
+  }, [inches]);
+
+  const handleInchesChange = useCallback((value: number) => {
+    lastChangedBy.current = "ft";
+    setInches(value);
+    setHeightCm(Math.round((feet * 12 + value) * 2.54));
+  }, [feet]);
+
   useEffect(() => {
-    if (unit === "ft") {
+    if (unit === "ft" && lastChangedBy.current !== "ft") {
       const totalInches = Math.round(heightCm / 2.54);
       setFeet(Math.floor(totalInches / 12));
       setInches(totalInches % 12);
     }
-  }, [unit, heightCm]);
-
-  useEffect(() => {
-    if (unit === "ft") {
-      setHeightCm(Math.round((feet * 12 + inches) * 2.54));
-    }
-  }, [feet, inches, unit]);
+    lastChangedBy.current = null;
+  }, [unit]);
 
   const handleSubmit = () => {
     if (heightCm >= 100 && heightCm <= 250) {
@@ -239,7 +255,7 @@ function HeightInput({
                 <ScrollWheel
                   values={cmValues}
                   selectedValue={heightCm}
-                  onChange={setHeightCm}
+                  onChange={handleCmChange}
                   suffix="cm"
                 />
               </motion.div>
@@ -255,7 +271,7 @@ function HeightInput({
                   <ScrollWheel
                     values={feetValues}
                     selectedValue={feet}
-                    onChange={setFeet}
+                    onChange={handleFeetChange}
                     suffix="ft"
                   />
                 </div>
@@ -264,7 +280,7 @@ function HeightInput({
                   <ScrollWheel
                     values={inchValues}
                     selectedValue={inches}
-                    onChange={setInches}
+                    onChange={handleInchesChange}
                     suffix="in"
                   />
                 </div>
