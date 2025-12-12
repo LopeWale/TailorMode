@@ -2,6 +2,7 @@
 
 import { useState, useCallback, Suspense } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
 const PhotoboothGlassBox = dynamic(() => import("@/components/PhotoboothGlassBox"), {
@@ -375,6 +376,30 @@ export default function Home() {
                   activeMeasurement={activeMeasurement}
                   completedMeasurements={completedMeasurements}
                 />
+
+                <Link href="/viewer" passHref legacyBehavior>
+                  <motion.a
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex items-center justify-between surface-elevated rounded-2xl p-4 group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#c4a77d]/20 to-[#9c8f78]/10 flex items-center justify-center">
+                        <svg className="w-6 h-6 text-[#c4a77d]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-[#faf9f7] font-medium text-sm">View 3D Model</p>
+                        <p className="text-[#78716c] text-xs">Inspect mesh and request measurements</p>
+                      </div>
+                    </div>
+                    <svg className="w-5 h-5 text-[#78716c] group-hover:text-[#c4a77d] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                  </motion.a>
+                </Link>
 
                 {completedMeasurements.length === analysisResult.measurements.length && (
                   <motion.div
