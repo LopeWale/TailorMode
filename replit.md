@@ -138,8 +138,18 @@ web/
 - No manual measurement entry as primary flow
 
 ## Recent Changes (December 2024)
-- Applied Apple Liquid Glass design to home screen buttons
-- Fixed button width - buttons now auto-size to content instead of full-width
+- **Apple 2025 Liquid Glass Design** - Implemented authentic iOS 26 liquid glass styling
+  - 60px blur with 200% saturation for true glass effect
+  - Lower alpha (0.72/0.62) for better backdrop visibility
+  - Inset specular highlights and subtle depth shadows
+  - Pill-shaped buttons with rounded-full
+- Fixed button width - buttons now auto-size to content (inline-flex)
+- Fixed button height - consistent heights (h-14 primary, h-12 secondary)
+- Applied liquid glass styling to ALL buttons across the app:
+  - Home page (page.tsx)
+  - MultiAngleCapture (Continue, Start Capture, Go Back)
+  - MeasurementSelector (Preset/Custom selection, Analyze, Start Capture)
+  - Viewer page (Export, Share buttons)
 - Added liquid-glass, liquid-glass-primary, liquid-glass-secondary CSS utility classes
 
 

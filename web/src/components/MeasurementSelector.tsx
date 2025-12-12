@@ -169,10 +169,10 @@ export function MeasurementSelector({ onSelectionComplete, onBack }: Measurement
             <div className="space-y-4">
               <button
                 onClick={() => setMode("preset")}
-                className="w-full p-[20px] rounded-[20px] liquid-glass-secondary flex items-center gap-4 transition-all duration-300"
+                className="w-full p-4 rounded-2xl liquid-glass-secondary flex items-center gap-4 transition-all duration-200"
               >
-                <div className="w-12 h-12 rounded-lg bg-[#c4a77d]/20 flex items-center justify-center text-[#c4a77d]">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
+                <div className="w-11 h-11 rounded-xl bg-[#c4a77d]/15 flex items-center justify-center text-[#c4a77d]">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
                     <rect x="3" y="3" width="7" height="7" rx="1"/>
                     <rect x="14" y="3" width="7" height="7" rx="1"/>
                     <rect x="3" y="14" width="7" height="7" rx="1"/>
@@ -187,10 +187,10 @@ export function MeasurementSelector({ onSelectionComplete, onBack }: Measurement
               
               <button
                 onClick={() => setMode("custom")}
-                className="w-full p-[20px] rounded-[20px] liquid-glass-secondary flex items-center gap-4 transition-all duration-300"
+                className="w-full p-4 rounded-2xl liquid-glass-secondary flex items-center gap-4 transition-all duration-200"
               >
-                <div className="w-12 h-12 rounded-lg bg-[#c4a77d]/20 flex items-center justify-center text-[#c4a77d]">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
+                <div className="w-11 h-11 rounded-xl bg-[#c4a77d]/15 flex items-center justify-center text-[#c4a77d]">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
                     <path d="M12 2a2 2 0 012 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 017 7h1a1 1 0 011 1v3a1 1 0 01-1 1h-1a7 7 0 01-7 7H9a7 7 0 01-7-7H1a1 1 0 01-1-1v-3a1 1 0 011-1h1a7 7 0 017-7h1V5.73A2 2 0 0112 2z"/>
                   </svg>
                 </div>
@@ -292,7 +292,7 @@ export function MeasurementSelector({ onSelectionComplete, onBack }: Measurement
             <button
               onClick={handleCustomSubmit}
               disabled={!customDescription.trim()}
-              className="mt-6 w-full py-[18px] rounded-[20px] liquid-glass-primary text-[#0a0a0f] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+              className="mt-6 liquid-glass-primary h-14 px-8 rounded-full font-semibold text-[15px] inline-flex items-center justify-center text-[#1a1816] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 mx-auto"
             >
               Analyze Requirements
             </button>
@@ -416,7 +416,7 @@ export function MeasurementSelector({ onSelectionComplete, onBack }: Measurement
               <div className="max-w-md mx-auto">
                 <button
                   onClick={handleConfirmSelection}
-                  className="w-full py-[18px] rounded-[20px] liquid-glass-primary text-[#0a0a0f] font-semibold transition-all duration-300"
+                  className="liquid-glass-primary h-14 w-full rounded-full font-semibold text-[15px] flex items-center justify-center text-[#1a1816] transition-all duration-200"
                 >
                   Start Capture ({aiAnalysis.requiredMeasurements.length + includedOptional.size} measurements)
                 </button>
