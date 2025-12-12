@@ -388,6 +388,7 @@ function AngleCapture({
   const streamRef = useRef<MediaStream | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
 
   useEffect(() => {
     const startCamera = async () => {
@@ -406,8 +407,15 @@ function AngleCapture({
           videoRef.current.srcObject = mediaStream;
           videoRef.current.onloadedmetadata = () => setIsReady(true);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Camera error:", err);
+        if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+          setCameraError("No camera found. Please connect a camera and try again.");
+        } else if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+          setCameraError("Camera access denied. Please allow camera access in your browser settings.");
+        } else {
+          setCameraError("Unable to access camera. Please check your device settings.");
+        }
       }
     };
 
@@ -447,6 +455,27 @@ function AngleCapture({
       });
     }, 1000);
   }, [onCapture]);
+
+  if (cameraError) {
+    return (
+      <div className="fixed inset-0 z-50 bg-[#0a0908] flex flex-col items-center justify-center p-6">
+        <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mb-6">
+          <svg className="w-10 h-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+          </svg>
+        </div>
+        <h2 className="text-xl font-semibold text-[#e8e0d5] mb-3 text-center">Camera Unavailable</h2>
+        <p className="text-[#9c8f78] text-center mb-8 max-w-sm">{cameraError}</p>
+        <button
+          onClick={onClose}
+          className="px-8 py-3 rounded-xl bg-[#c4a77d] text-[#0a0a0f] font-medium hover:bg-[#d4b78d] transition-colors"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-[#0a0908]">
