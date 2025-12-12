@@ -179,7 +179,7 @@ export default function Home() {
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="w-full max-w-sm"
+                className="w-full max-w-sm space-y-3"
               >
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -192,6 +192,20 @@ export default function Home() {
                   </svg>
                   Start 3D Scan
                 </motion.button>
+                
+                <Link href="/measure" passHref legacyBehavior>
+                  <motion.a
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full py-4 rounded-xl font-medium text-base flex items-center justify-center gap-3 surface-elevated border border-[#c4a77d]/30 text-[#c4a77d] cursor-pointer"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
+                    </svg>
+                    Tailor Measurements
+                  </motion.a>
+                </Link>
               </motion.div>
             </div>
 
