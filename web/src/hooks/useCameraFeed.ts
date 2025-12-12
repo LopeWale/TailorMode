@@ -30,7 +30,7 @@ export function useCameraFeed(): UseCameraFeedResult {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: "user",
+          facingMode: { exact: "user" },
           width: { ideal: 320 },
           height: { ideal: 240 },
         },
