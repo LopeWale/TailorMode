@@ -19,23 +19,24 @@ interface HumanModelProps {
   isInteractive?: boolean;
 }
 
-const MEASUREMENT_POSITIONS: Record<string, { y: number; width: number }> = {
-  "chest": { y: 28, width: 65 },
-  "waist": { y: 42, width: 52 },
-  "hips": { y: 52, width: 60 },
-  "inseam": { y: 75, width: 20 },
-  "shoulder": { y: 22, width: 70 },
-  "sleeve": { y: 32, width: 45 },
-  "neck": { y: 15, width: 25 },
-  "thigh": { y: 58, width: 35 },
+const MEASUREMENT_POSITIONS: Record<string, { y: number; width: number; side?: "left" | "right" }> = {
+  "chest": { y: 32, width: 72 },
+  "waist": { y: 44, width: 58 },
+  "hips": { y: 54, width: 68 },
+  "inseam": { y: 72, width: 18, side: "right" },
+  "shoulder": { y: 24, width: 82 },
+  "sleeve": { y: 36, width: 40, side: "left" },
+  "arm": { y: 36, width: 40, side: "left" },
+  "neck": { y: 17, width: 22 },
+  "thigh": { y: 62, width: 32 },
 };
 
-function getMeasurementPosition(name: string): { y: number; width: number } {
+function getMeasurementPosition(name: string): { y: number; width: number; side?: "left" | "right" } {
   const key = name.toLowerCase();
   for (const [k, v] of Object.entries(MEASUREMENT_POSITIONS)) {
     if (key.includes(k)) return v;
   }
-  return { y: 35, width: 50 };
+  return { y: 40, width: 50 };
 }
 
 function MeasurementLine({ 
@@ -57,7 +58,7 @@ function MeasurementLine({
 
   useEffect(() => {
     if (isActive && !hasCompletedRef.current) {
-      const duration = 1200;
+      const duration = 800;
       const startTime = Date.now();
       
       const animate = () => {
@@ -69,7 +70,7 @@ function MeasurementLine({
           requestAnimationFrame(animate);
         } else if (!hasCompletedRef.current) {
           hasCompletedRef.current = true;
-          setTimeout(() => onComplete?.(), 400);
+          setTimeout(() => onComplete?.(), 300);
         }
       };
       
@@ -90,186 +91,316 @@ function MeasurementLine({
   return (
     <motion.div
       initial={{ opacity: 0 }}
-      animate={{ opacity: isActive || isCompleted ? 1 : 0.3 }}
-      className="absolute left-1/2 -translate-x-1/2"
+      animate={{ opacity: isActive || isCompleted ? 1 : 0.2 }}
+      className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
       style={{ top: `${position.y}%` }}
     >
       <div className="relative flex items-center justify-center">
         <motion.div
-          className="h-[2px] bg-gradient-to-r from-transparent via-[#c4a77d] to-transparent"
+          className="h-[3px] rounded-full"
           style={{ 
-            width: `${position.width * currentProgress}%`,
-            minWidth: currentProgress > 0 ? '20px' : '0px',
-          }}
-          animate={{
-            boxShadow: isActive ? '0 0 10px rgba(196, 167, 125, 0.5)' : 'none'
+            width: `${position.width * currentProgress * 1.8}px`,
+            background: isActive 
+              ? 'linear-gradient(90deg, rgba(196,167,125,0) 0%, #c4a77d 50%, rgba(196,167,125,0) 100%)'
+              : 'linear-gradient(90deg, rgba(196,167,125,0) 0%, rgba(196,167,125,0.6) 50%, rgba(196,167,125,0) 100%)',
+            boxShadow: isActive ? '0 0 20px rgba(196,167,125,0.6), 0 0 40px rgba(196,167,125,0.3)' : 'none'
           }}
         />
         
-        {currentProgress > 0 && (
+        {currentProgress > 0.1 && (
           <>
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute left-0 w-2 h-2 rounded-full bg-[#c4a77d]"
-              style={{ left: `${50 - (position.width * currentProgress) / 2}%` }}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="absolute w-2.5 h-2.5 rounded-full border-2 border-[#c4a77d] bg-[#0f0e0c]"
+              style={{ 
+                left: `calc(50% - ${position.width * currentProgress * 0.9}px)`,
+                boxShadow: isActive ? '0 0 10px rgba(196,167,125,0.8)' : 'none'
+              }}
             />
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: currentProgress }}
-              className="absolute right-0 w-2 h-2 rounded-full bg-[#c4a77d]"
-              style={{ right: `${50 - (position.width * currentProgress) / 2}%` }}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: currentProgress, opacity: 1 }}
+              className="absolute w-2.5 h-2.5 rounded-full border-2 border-[#c4a77d] bg-[#0f0e0c]"
+              style={{ 
+                right: `calc(50% - ${position.width * currentProgress * 0.9}px)`,
+                boxShadow: isActive ? '0 0 10px rgba(196,167,125,0.8)' : 'none'
+              }}
             />
           </>
         )}
 
-        {showFull && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap"
-          >
-            <div className="bg-[#1f1c18]/95 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-[#c4a77d]/30 shadow-lg">
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-[#c4a77d] font-bold text-sm">{measurement.value}</span>
-                <span className="text-[#9c8f78] text-xs">{measurement.unit}</span>
+        <AnimatePresence>
+          {showFull && (
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              className="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap z-10"
+            >
+              <div 
+                className="px-3 py-1.5 rounded-xl backdrop-blur-md"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(31,28,24,0.95) 0%, rgba(15,14,12,0.98) 100%)',
+                  border: '1px solid rgba(196,167,125,0.3)',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)'
+                }}
+              >
+                <div className="flex items-baseline gap-1">
+                  <span className="text-[#c4a77d] font-semibold text-base">{measurement.value}</span>
+                  <span className="text-[#9c8f78] text-xs">{measurement.unit}</span>
+                </div>
+                <div className="text-[#78716c] text-[10px] text-center font-medium">{measurement.name}</div>
               </div>
-              <div className="text-[#78716c] text-[10px] text-center">{measurement.name}</div>
-            </div>
-          </motion.div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );
 }
 
-function BodySilhouette({ isAnalyzing }: { isAnalyzing: boolean }) {
+function PremiumBodyModel({ isAnalyzing }: { isAnalyzing: boolean }) {
   return (
     <div className="absolute inset-0 flex items-center justify-center">
       <motion.svg
-        viewBox="0 0 200 400"
-        className="w-full h-full max-w-[200px]"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        viewBox="0 0 280 520"
+        className="w-full h-full max-w-[240px] max-h-[420px]"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
       >
         <defs>
-          <linearGradient id="bodyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <linearGradient id="bodyFill" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#d4c4a8" stopOpacity="0.15" />
+            <stop offset="30%" stopColor="#c4a77d" stopOpacity="0.12" />
+            <stop offset="70%" stopColor="#9c8f78" stopOpacity="0.1" />
+            <stop offset="100%" stopColor="#8b7355" stopOpacity="0.08" />
+          </linearGradient>
+          
+          <linearGradient id="bodyStroke" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#d4c4a8" stopOpacity="0.9" />
+            <stop offset="25%" stopColor="#c4a77d" stopOpacity="0.7" />
+            <stop offset="50%" stopColor="#9c8f78" stopOpacity="0.5" />
+            <stop offset="75%" stopColor="#c4a77d" stopOpacity="0.7" />
+            <stop offset="100%" stopColor="#d4c4a8" stopOpacity="0.9" />
+          </linearGradient>
+
+          <linearGradient id="innerGlow" x1="50%" y1="0%" x2="50%" y2="100%">
             <stop offset="0%" stopColor="#c4a77d" stopOpacity="0.3" />
-            <stop offset="50%" stopColor="#9c8f78" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#c4a77d" stopOpacity="0.3" />
+            <stop offset="50%" stopColor="#c4a77d" stopOpacity="0.05" />
+            <stop offset="100%" stopColor="#c4a77d" stopOpacity="0.2" />
           </linearGradient>
-          <linearGradient id="strokeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#c4a77d" />
-            <stop offset="100%" stopColor="#9c8f78" />
-          </linearGradient>
-          <filter id="glow">
-            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+          
+          <radialGradient id="headGlow" cx="50%" cy="40%" r="50%">
+            <stop offset="0%" stopColor="#d4c4a8" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#9c8f78" stopOpacity="0.05" />
+          </radialGradient>
+
+          <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="glow"/>
             <feMerge>
-              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="glow"/>
               <feMergeNode in="SourceGraphic"/>
             </feMerge>
           </filter>
+
+          <filter id="innerShadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feOffset dx="0" dy="2"/>
+            <feGaussianBlur stdDeviation="3"/>
+            <feComposite operator="out" in="SourceGraphic"/>
+            <feColorMatrix values="0 0 0 0 0.1  0 0 0 0 0.08  0 0 0 0 0.05  0 0 0 0.5 0"/>
+            <feBlend in="SourceGraphic"/>
+          </filter>
+
+          <clipPath id="bodyClip">
+            <path d="M140 45 C165 45, 182 65, 182 92 C182 119, 165 136, 140 140 C115 136, 98 119, 98 92 C98 65, 115 45, 140 45 Z
+                     M140 140 L140 155 C165 160, 195 175, 210 200 L235 270 C242 290, 238 310, 228 320 L205 380 C200 395, 205 405, 215 410
+                     L225 412 C232 412, 235 405, 232 395 L245 340 C248 325, 255 305, 252 285 L230 220 
+                     M140 140 L140 155 C115 160, 85 175, 70 200 L45 270 C38 290, 42 310, 52 320 L75 380 C80 395, 75 405, 65 410
+                     L55 412 C48 412, 45 405, 48 395 L35 340 C32 325, 25 305, 28 285 L50 220
+                     M120 250 L115 330 C112 370, 108 410, 105 450 L100 490 C98 505, 102 515, 112 518 L132 515 C140 512, 142 502, 140 490
+                     L145 430 C148 400, 140 350, 140 320
+                     M160 250 L165 330 C168 370, 172 410, 175 450 L180 490 C182 505, 178 515, 168 518 L148 515 C140 512, 138 502, 140 490
+                     L135 430 C132 400, 140 350, 140 320" />
+          </clipPath>
         </defs>
 
-        <motion.path
-          d="M 100 30
-             C 115 30, 125 40, 125 55
-             C 125 70, 115 80, 100 82
-             C 85 80, 75 70, 75 55
-             C 75 40, 85 30, 100 30
-             Z"
-          fill="url(#bodyGradient)"
-          stroke="url(#strokeGradient)"
-          strokeWidth="1.5"
-          filter="url(#glow)"
+        <motion.ellipse
+          cx="140"
+          cy="92"
+          rx="42"
+          ry="48"
+          fill="url(#headGlow)"
+          stroke="url(#bodyStroke)"
+          strokeWidth="2"
+          filter="url(#softGlow)"
+          animate={isAnalyzing ? { opacity: [0.8, 1, 0.8] } : {}}
+          transition={isAnalyzing ? { repeat: Infinity, duration: 2 } : {}}
         />
 
         <motion.path
-          d="M 100 82
-             L 100 95
-             C 100 98, 85 100, 75 105
-             L 50 150
-             C 45 160, 48 175, 55 180
-             L 30 240
-             C 28 250, 30 260, 35 262
-             L 45 265
-             C 50 265, 52 260, 50 255
-             L 65 200
-             L 75 170
-             L 72 180
-             L 70 240
-             C 68 260, 65 280, 63 300
-             L 60 350
-             C 58 365, 60 375, 65 378
-             L 80 380
-             C 85 378, 85 370, 83 360
-             L 88 300
-             C 90 280, 95 260, 100 250
-             C 105 260, 110 280, 112 300
-             L 117 360
-             C 115 370, 115 378, 120 380
-             L 135 378
-             C 140 375, 142 365, 140 350
-             L 137 300
-             C 135 280, 132 260, 130 240
-             L 128 180
-             L 125 170
-             L 135 200
-             L 150 255
-             C 148 260, 150 265, 155 265
-             L 165 262
-             C 170 260, 172 250, 170 240
-             L 145 180
-             C 152 175, 155 160, 150 150
-             L 125 105
-             C 115 100, 100 98, 100 95
+          d="M140 140 
+             Q140 148, 140 155
+             C105 162, 75 185, 55 225
+             L32 295
+             C26 318, 32 342, 45 352
+             L52 360
+             C58 365, 65 360, 62 350
+             L78 300
+             L95 255
+             L88 285
+             L82 360
+             C78 400, 75 445, 72 485
+             L68 510
+             C65 528, 72 542, 88 545
+             L118 540
+             C130 536, 132 522, 128 505
+             L135 430
+             L140 350
+             L145 430
+             L152 505
+             C148 522, 150 536, 162 540
+             L192 545
+             C208 542, 215 528, 212 510
+             L208 485
+             C205 445, 202 400, 198 360
+             L192 285
+             L185 255
+             L202 300
+             L218 350
+             C215 360, 222 365, 228 360
+             L235 352
+             C248 342, 254 318, 248 295
+             L225 225
+             C205 185, 175 162, 140 155
+             Q140 148, 140 140
              Z"
-          fill="url(#bodyGradient)"
-          stroke="url(#strokeGradient)"
-          strokeWidth="1.5"
-          filter="url(#glow)"
-          animate={isAnalyzing ? {
-            opacity: [0.6, 1, 0.6],
-          } : {}}
-          transition={isAnalyzing ? {
-            repeat: Infinity,
-            duration: 2,
-          } : {}}
+          fill="url(#bodyFill)"
+          stroke="url(#bodyStroke)"
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+          filter="url(#softGlow)"
+          animate={isAnalyzing ? { opacity: [0.7, 1, 0.7] } : {}}
+          transition={isAnalyzing ? { repeat: Infinity, duration: 2.5, ease: "easeInOut" } : {}}
+        />
+
+        <motion.path
+          d="M100 178 Q140 195, 180 178"
+          fill="none"
+          stroke="url(#bodyStroke)"
+          strokeWidth="1"
+          strokeOpacity="0.3"
+        />
+        <motion.path
+          d="M95 230 Q140 250, 185 230"
+          fill="none"
+          stroke="url(#bodyStroke)"
+          strokeWidth="1"
+          strokeOpacity="0.25"
+        />
+        <motion.path
+          d="M108 290 Q140 305, 172 290"
+          fill="none"
+          stroke="url(#bodyStroke)"
+          strokeWidth="1"
+          strokeOpacity="0.2"
         />
 
         {isAnalyzing && (
-          <motion.line
-            x1="50"
-            y1="0"
-            x2="150"
-            y2="0"
-            stroke="#c4a77d"
-            strokeWidth="2"
-            opacity="0.6"
-            animate={{ y1: [0, 400, 0], y2: [0, 400, 0] }}
+          <motion.rect
+            x="40"
+            y="0"
+            width="200"
+            height="6"
+            fill="url(#bodyStroke)"
+            opacity="0.4"
+            rx="3"
+            animate={{ y: [0, 520, 0] }}
             transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
-            style={{ filter: 'blur(1px)' }}
+            style={{ filter: 'blur(2px)' }}
           />
         )}
+
+        <motion.circle
+          cx="100"
+          cy="178"
+          r="3"
+          fill="#c4a77d"
+          opacity="0.6"
+        />
+        <motion.circle
+          cx="180"
+          cy="178"
+          r="3"
+          fill="#c4a77d"
+          opacity="0.6"
+        />
+        <motion.circle
+          cx="95"
+          cy="232"
+          r="2.5"
+          fill="#c4a77d"
+          opacity="0.5"
+        />
+        <motion.circle
+          cx="185"
+          cy="232"
+          r="2.5"
+          fill="#c4a77d"
+          opacity="0.5"
+        />
+        <motion.circle
+          cx="108"
+          cy="292"
+          r="2.5"
+          fill="#c4a77d"
+          opacity="0.4"
+        />
+        <motion.circle
+          cx="172"
+          cy="292"
+          r="2.5"
+          fill="#c4a77d"
+          opacity="0.4"
+        />
       </motion.svg>
     </div>
   );
 }
 
-function GridBackground() {
+function PremiumBackground() {
   return (
-    <div className="absolute inset-0 overflow-hidden opacity-20">
+    <div className="absolute inset-0 overflow-hidden">
       <div 
         className="absolute inset-0"
         style={{
-          backgroundImage: `
-            linear-gradient(rgba(196, 167, 125, 0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(196, 167, 125, 0.1) 1px, transparent 1px)
-          `,
-          backgroundSize: '20px 20px',
+          background: `
+            radial-gradient(ellipse 80% 50% at 50% 50%, rgba(196,167,125,0.06) 0%, transparent 60%),
+            radial-gradient(ellipse 60% 40% at 50% 30%, rgba(156,143,120,0.04) 0%, transparent 50%),
+            linear-gradient(180deg, rgba(31,28,24,1) 0%, rgba(15,14,12,1) 50%, rgba(10,10,15,1) 100%)
+          `
         }}
       />
-      <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-[#0f0e0c]" />
+      
+      <div 
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(196,167,125,0.5) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(196,167,125,0.5) 1px, transparent 1px)
+          `,
+          backgroundSize: '40px 40px',
+        }}
+      />
+      
+      <div 
+        className="absolute inset-0"
+        style={{
+          background: 'radial-gradient(circle at 50% 50%, transparent 30%, rgba(10,10,15,0.8) 100%)'
+        }}
+      />
     </div>
   );
 }
@@ -295,10 +426,10 @@ export default function HumanModel({
   }, [measurements]);
 
   return (
-    <div className="w-full h-full relative bg-gradient-to-b from-[#1a1816] to-[#0f0e0c] rounded-2xl overflow-hidden">
-      <GridBackground />
+    <div className="w-full h-full relative overflow-hidden rounded-2xl">
+      <PremiumBackground />
       
-      <BodySilhouette isAnalyzing={isAnalyzing} />
+      <PremiumBodyModel isAnalyzing={isAnalyzing} />
       
       <div className="absolute inset-0">
         <AnimatePresence>
@@ -317,28 +448,36 @@ export default function HumanModel({
 
       {measurements.length === 0 && !isAnalyzing && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center"
         >
-          <p className="text-[#78716c] text-sm">Ready for measurement</p>
+          <p className="text-[#78716c] text-sm font-light tracking-wide">Ready for measurement</p>
         </motion.div>
       )}
 
       {isAnalyzing && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="absolute bottom-4 left-1/2 -translate-x-1/2"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute bottom-6 left-1/2 -translate-x-1/2"
         >
-          <div className="bg-[#1f1c18]/90 backdrop-blur-sm px-4 py-2 rounded-full border border-[#c4a77d]/30">
-            <p className="text-[#c4a77d] text-sm font-medium flex items-center gap-2">
+          <div 
+            className="px-5 py-2.5 rounded-full backdrop-blur-md"
+            style={{
+              background: 'linear-gradient(135deg, rgba(31,28,24,0.9) 0%, rgba(15,14,12,0.95) 100%)',
+              border: '1px solid rgba(196,167,125,0.25)',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.4)'
+            }}
+          >
+            <p className="text-[#c4a77d] text-sm font-medium flex items-center gap-2.5">
               <motion.span 
-                className="w-2 h-2 bg-[#c4a77d] rounded-full"
-                animate={{ opacity: [1, 0.3, 1] }}
-                transition={{ repeat: Infinity, duration: 1 }}
+                className="w-1.5 h-1.5 bg-[#c4a77d] rounded-full"
+                animate={{ opacity: [1, 0.3, 1], scale: [1, 0.8, 1] }}
+                transition={{ repeat: Infinity, duration: 1.2 }}
               />
-              Measuring {measurements[activeMeasurement!]?.name}...
+              <span className="tracking-wide">Measuring {measurements[activeMeasurement!]?.name}</span>
             </p>
           </div>
         </motion.div>

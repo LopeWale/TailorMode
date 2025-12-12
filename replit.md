@@ -1,7 +1,57 @@
 # TailorMode - 3D Body Measurement Platform
 
 ## Overview
-TailorMode is a mobile-first web application that uses your phone's camera and AI to capture body measurements. It features a stunning 3D human model visualization built with Three.js that shows measurements being taken in real-time.
+TailorMode is a mobile-first web application for capturing body measurements using multi-angle camera capture and AI-powered 3D reconstruction. The web app serves as a companion/fallback to the native iOS app which uses LiDAR for higher accuracy.
+
+## Architecture Understanding (from ARCHITECTURE.md)
+
+### Gemini AI Role
+Gemini is used ONLY as a **measurement assistant for tailors** - NOT for analyzing photos to extract measurements:
+- Interprets natural language measurement requests ("take the hollow-to-hem")
+- Maps requests to the Measurement DSL
+- Calls the Measurement Service with structured definitions
+- Returns conversational feedback and results
+
+### RGB/Web Capture Flow
+1. **Height calibration** - User enters height for scale reference
+2. **Multi-angle guided capture** - Front, Left, Back, Right views (4 angles)
+3. **Encrypted upload** - Frames sent to regional backend
+4. **Server-side photogrammetry** - 3D mesh reconstruction
+5. **SMPL/SMPL-X fitting** - Body model alignment
+6. **Measurement computation** - Extract circumferences, lengths, distances from mesh
+
+### LiDAR/iOS Flow (Native App)
+- On-device TSDF fusion with ARKit
+- Object Capture photogrammetry
+- On-device SMPL fitting with Metal acceleration
+- Direct measurement from 3D mesh
+
+### Tailor Dashboard
+- Three.js 3D mesh viewer (actual reconstructed mesh)
+- Measurement overlays and landmark annotations
+- AI measurement assistant chat panel
+- Export and share capabilities
+
+## Current Implementation Status
+
+### Completed (Frontend)
+- Multi-angle capture UI with 4-view guidance (MultiAngleCapture.tsx)
+- Height calibration step before capture
+- Camera capture using WebRTC
+- Gemini measurement assistant integration (measurement-service.ts)
+- Updated chat API for NLP measurement requests
+- Removed manual entry as primary flow
+
+### Backend Infrastructure Needed
+- **Photogrammetry service**: COLMAP, Meshroom, or cloud API (Polycam, etc.)
+- **SMPL fitting service**: Python with PyTorch for body model fitting
+- **Mesh storage**: Regional S3/GCS with client-side encryption
+- **Measurement computation**: trimesh/Open3D/libigl for geodesics, circumferences
+
+### UI/UX Status
+- Home screen: "3D Body Scanning" with "Start 3D Scan" button
+- Capture flow: Height → Instructions → 4-angle capture → Processing
+- Results: 2D visualization placeholder (needs actual 3D mesh viewer)
 
 ## Design System
 - **Color Palette**: Monochrome earth-tones (browns, tans, warm neutrals)
@@ -9,28 +59,8 @@ TailorMode is a mobile-first web application that uses your phone's camera and A
   - Secondary: #9c8f78 (muted brown)
   - Background: #1f1c18 / #0a0a0f (deep earth brown/charcoal)
   - Text: #e8e0d5 (warm off-white)
-- **Icons**: SVG icons only (no emojis anywhere)
+- **Icons**: SVG icons only (NO emojis anywhere)
 - **Style**: Premium, professional, glassmorphism effects
-
-## Key Features
-- **Camera Capture**: Uses phone camera via web APIs (getUserMedia) for body capture
-- **AI Analysis**: Gemini AI analyzes captured images to extract body measurements
-- **3D Visualization**: Three.js-powered 3D human body model shows measurements with animations
-- **Mobile-First Design**: Beautiful UI optimized for mobile devices with glassmorphism effects
-- **Progress Tracking**: Real-time measurement progress with animated visualization
-- **Measurement History**: View past measurements with export and share capabilities
-- **AI Assistant Chat**: Conversational interface for tailoring advice using Gemini
-- **User Profiles**: Account management with connected tailors
-- **Authentication**: Replit OAuth with PKCE, secure session management
-
-## Tech Stack
-- **Frontend**: Next.js 16 with React 19, TypeScript
-- **3D Graphics**: Three.js with @react-three/fiber and @react-three/drei
-- **Styling**: Tailwind CSS v4, Framer Motion for animations
-- **AI**: Gemini AI via Replit AI Integrations (no API key needed)
-- **Authentication**: Replit OAuth with openid-client library
-- **Database**: PostgreSQL with Prisma ORM
-- **Deployment**: Replit Autoscale
 
 ## Project Structure
 ```
@@ -38,71 +68,48 @@ web/
 ├── src/
 │   ├── app/
 │   │   ├── api/
-│   │   │   ├── analyze/          # Gemini AI analysis endpoint
-│   │   │   ├── auth/user/        # Get current user endpoint
-│   │   │   ├── callback/         # OAuth callback handler
-│   │   │   ├── chat/             # AI chat endpoint
-│   │   │   ├── login/            # OAuth login initiation
-│   │   │   ├── logout/           # Session logout
-│   │   │   └── measurements/     # Measurement data endpoint
-│   │   ├── chat/                 # AI assistant chat page
-│   │   ├── dashboard/            # Tailor dashboard page
-│   │   ├── history/              # Measurement history page
-│   │   ├── profile/              # User profile page
-│   │   ├── globals.css           # Tailwind v4 styles with earth-tones
-│   │   ├── layout.tsx            # Root layout with mobile viewport
-│   │   └── page.tsx              # Main app with camera, 3D model, results
+│   │   │   ├── chat/              # Gemini measurement assistant
+│   │   │   ├── reconstruct/       # 3D reconstruction endpoint (needs backend integration)
+│   │   │   └── auth/, login/, etc.
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   └── page.tsx               # Main app with multi-angle capture flow
 │   ├── components/
-│   │   ├── CameraCapture.tsx     # Camera capture with countdown, pose guide
-│   │   ├── HumanModel.tsx        # Three.js 3D human body model
-│   │   ├── MeasurementProgress.tsx # Measurement list with progress
-│   │   └── Navigation.tsx        # Bottom navigation component
-│   ├── lib/
-│   │   ├── auth.ts               # Replit OAuth authentication
-│   │   ├── gemini.ts             # Gemini AI integration
-│   │   └── prisma.ts             # Database client
-│   └── types/
-│       └── three.d.ts            # Three.js TypeScript types
+│   │   ├── MultiAngleCapture.tsx  # 4-angle guided capture with height calibration
+│   │   ├── HumanModel.tsx         # 2D visualization (placeholder for 3D mesh)
+│   │   └── MeasurementProgress.tsx
+│   └── lib/
+│       ├── measurement-service.ts # Gemini NLP → Measurement DSL
+│       └── prisma.ts
 ├── prisma/
-│   └── schema.prisma             # Database schema with User, Session models
+│   └── schema.prisma
 └── public/
-    └── manifest.json             # PWA manifest
 ```
 
-## Running the App
-The app runs on port 5000 with the Next.js development server.
+## Tech Stack
+- **Frontend**: Next.js 16 with React 19, TypeScript
+- **Styling**: Tailwind CSS v4, Framer Motion
+- **AI**: Gemini AI for measurement assistant (NLP only, NOT image analysis)
+- **Auth**: Replit OAuth with PKCE
+- **Database**: PostgreSQL with Prisma ORM
 
-## User Flow
-1. **Home Screen**: User sees the 3D human model preview and "Begin Scan" button
-2. **Camera Screen**: Phone camera opens with pose guide overlay and countdown
-3. **Analysis Screen**: AI processes the captured image
-4. **Results Screen**: 3D model displays with animated measurement lines and progress
-5. **History**: View past measurements, export or share with tailors
-6. **Chat**: Get AI-powered tailoring advice and recommendations
-7. **Profile**: Manage account settings and connected tailors
-
-## Authentication Flow
-1. User clicks login button on profile/home page
-2. Redirected to Replit OAuth with PKCE code challenge
-3. After authorization, callback exchanges code for tokens
-4. User upserted to database, session created with secure cookie
-5. Session validated on each request, tokens refreshed as needed
-
-## Environment Variables
-- `AI_INTEGRATIONS_GEMINI_BASE_URL`: Set automatically by Replit AI Integrations
-- `AI_INTEGRATIONS_GEMINI_API_KEY`: Set automatically by Replit AI Integrations
-- `DATABASE_URL`: PostgreSQL connection string
-- `REPL_ID`: Used as OAuth client ID (set by Replit)
+## Next Steps for Production
+1. Integrate photogrammetry service (cloud API or self-hosted)
+2. Deploy SMPL fitting microservice
+3. Build Three.js 3D mesh viewer for dashboard
+4. Implement secure mesh storage with regional compliance
+5. Add QC checks during capture (coverage, blur, exposure)
 
 ## User Preferences
-- Monochrome earth-tone design palette only (no blue/purple/pink)
+- Monochrome earth-tone design palette only
 - SVG icons only, absolutely NO emojis
 - Mobile-first design with premium feel
-- Glassmorphism effects for modern look
+- No manual measurement entry as primary flow
 
-## Recent Changes
-- December 2024: Initial implementation with camera capture, Gemini AI integration, Three.js 3D human model
-- December 2024: Complete UI redesign with earth-tone color palette, removed all emojis
-- December 2024: Added Replit OAuth authentication with session management
-- December 2024: Implemented measurement history, AI chat, profile, and dashboard pages
-- December 2024: Added bottom navigation component with Framer Motion animations
+## Recent Changes (December 2024)
+- Restructured app based on architecture document requirements
+- Gemini now used correctly as measurement assistant (not image analyzer)
+- Added multi-angle capture flow with height calibration
+- Created reconstruction API endpoint structure
+- Removed manual entry as primary flow
+- Updated home screen to "3D Body Scanning"

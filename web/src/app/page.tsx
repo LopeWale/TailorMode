@@ -13,15 +13,11 @@ const HumanModel = dynamic(() => import("@/components/HumanModel"), {
   ),
 });
 
-const CameraCapture = dynamic(() => import("@/components/CameraCapture"), {
+const MultiAngleCapture = dynamic(() => import("@/components/MultiAngleCapture"), {
   ssr: false,
 });
 
 const MeasurementProgress = dynamic(() => import("@/components/MeasurementProgress"), {
-  ssr: false,
-});
-
-const ManualMeasurement = dynamic(() => import("@/components/ManualMeasurement"), {
   ssr: false,
 });
 
@@ -30,44 +26,46 @@ interface Measurement {
   value: number;
   unit: string;
   confidence: number;
-  landmark_start: string;
-  landmark_end: string;
+  type?: string;
 }
 
-interface AnalysisResult {
+interface ReconstructionResult {
+  success: boolean;
+  meshId?: string;
   measurements: Measurement[];
-  bodyType: string;
-  posture: string;
-  recommendations: string[];
-  isDemo?: boolean;
+  qcScore: number;
+  processingTime: number;
+  warnings: string[];
 }
 
-type AppState = "home" | "camera" | "manual" | "analyzing" | "results";
+type AppState = "home" | "capture" | "processing" | "results";
 
 export default function Home() {
   const [appState, setAppState] = useState<AppState>("home");
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<ReconstructionResult | null>(null);
   const [activeMeasurement, setActiveMeasurement] = useState<number | null>(null);
   const [completedMeasurements, setCompletedMeasurements] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const handleCapture = useCallback(async (imageData: string) => {
-    setCapturedImage(imageData);
-    setAppState("analyzing");
+  const handleCaptureComplete = useCallback(async (captureData: {
+    frames: { image: string; angle: string; timestamp: number }[];
+    height: number;
+    deviceInfo: { hasDepth: boolean; resolution: { width: number; height: number } };
+  }) => {
+    setAppState("processing");
     setError(null);
 
     try {
-      const response = await fetch("/api/analyze", {
+      const response = await fetch("/api/reconstruct", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: imageData }),
+        body: JSON.stringify(captureData),
       });
 
       const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(result.error || "Analysis failed");
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Reconstruction failed");
       }
 
       setAnalysisResult(result);
@@ -77,34 +75,8 @@ export default function Home() {
         setActiveMeasurement(0);
       }
     } catch (err: any) {
-      setError(err.message || "Failed to analyze image");
+      setError(err.message || "Failed to process capture");
       setAppState("home");
-    }
-  }, []);
-
-  const handleManualComplete = useCallback((measurements: Record<string, number>) => {
-    const measurementList: Measurement[] = Object.entries(measurements).map(([key, value]) => ({
-      name: key.charAt(0).toUpperCase() + key.slice(1),
-      value,
-      unit: "cm",
-      confidence: 100,
-      landmark_start: key,
-      landmark_end: key,
-    }));
-
-    setAnalysisResult({
-      measurements: measurementList,
-      bodyType: "Custom",
-      posture: "Manual Entry",
-      recommendations: [
-        "Measurements entered manually for maximum accuracy",
-        "Consider using a tailor for professional verification"
-      ],
-    });
-    setAppState("results");
-    
-    if (measurementList.length > 0) {
-      setActiveMeasurement(0);
     }
   }, []);
 
@@ -122,12 +94,17 @@ export default function Home() {
 
   const resetApp = useCallback(() => {
     setAppState("home");
-    setCapturedImage(null);
     setAnalysisResult(null);
     setActiveMeasurement(null);
     setCompletedMeasurements([]);
     setError(null);
   }, []);
+
+  const formattedMeasurements = analysisResult?.measurements.map(m => ({
+    ...m,
+    landmark_start: m.type || "",
+    landmark_end: m.type || "",
+  })) || [];
 
   return (
     <main className="min-h-screen min-h-dvh flex flex-col bg-[#0f0e0c]">
@@ -146,7 +123,7 @@ export default function Home() {
                   <h1 className="text-xl font-semibold tracking-tight text-[#faf9f7]">
                     Tailor<span className="text-[#c4a77d]">Mode</span>
                   </h1>
-                  <p className="text-xs text-[#78716c] mt-0.5">Body Measurement</p>
+                  <p className="text-xs text-[#78716c] mt-0.5">3D Body Scanning</p>
                 </div>
                 <button className="w-10 h-10 rounded-full surface-glass flex items-center justify-center">
                   <svg className="w-5 h-5 text-[#a8a29e]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -180,10 +157,10 @@ export default function Home() {
                 className="text-center mb-8 max-w-sm"
               >
                 <h2 className="text-2xl sm:text-3xl font-semibold text-[#faf9f7] mb-3 tracking-tight">
-                  Precision Measurements
+                  3D Body Scanning
                 </h2>
                 <p className="text-[#78716c] text-sm leading-relaxed">
-                  AI-powered body scanning or manual entry. Your measurements, your way.
+                  Multi-angle capture with AI reconstruction for precise tailoring measurements
                 </p>
               </motion.div>
 
@@ -201,31 +178,18 @@ export default function Home() {
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="w-full max-w-sm space-y-3"
+                className="w-full max-w-sm"
               >
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setAppState("camera")}
+                  onClick={() => setAppState("capture")}
                   className="btn-primary w-full py-4 rounded-xl font-medium text-base flex items-center justify-center gap-3"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25" />
                   </svg>
-                  Scan with Camera
-                </motion.button>
-
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setAppState("manual")}
-                  className="w-full py-4 rounded-xl font-medium text-base flex items-center justify-center gap-3 bg-[#1f1c18] border border-[#3d3630] text-[#e8e0d5] hover:border-[#c4a77d]/50 transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
-                  </svg>
-                  Enter Manually
+                  Start 3D Scan
                 </motion.button>
               </motion.div>
             </div>
@@ -234,23 +198,23 @@ export default function Home() {
               initial={{ y: 40, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.7, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="safe-area-bottom px-6 pb-4"
+              className="safe-area-bottom px-6 pb-6"
             >
               <div className="surface-elevated rounded-2xl p-4">
                 <div className="flex items-center gap-4">
                   {[
-                    { label: "Capture", desc: "Quick scan", icon: "M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" },
-                    { label: "Analyze", desc: "AI powered", icon: "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" },
-                    { label: "Results", desc: "Instant", icon: "M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
-                  ].map((feature) => (
-                    <div key={feature.label} className="flex-1 text-center">
-                      <div className="w-10 h-10 mx-auto mb-2 rounded-xl bg-[#1f1c18] flex items-center justify-center">
+                    { label: "Multi-Angle", desc: "4 views", icon: "M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" },
+                    { label: "AI Reconstruct", desc: "3D mesh", icon: "M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25" },
+                    { label: "Measurements", desc: "Precise", icon: "M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
+                  ].map((item, index) => (
+                    <div key={index} className="flex-1 text-center">
+                      <div className="w-10 h-10 mx-auto rounded-full bg-[#c4a77d]/10 flex items-center justify-center mb-2">
                         <svg className="w-5 h-5 text-[#c4a77d]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d={feature.icon} />
+                          <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                         </svg>
                       </div>
-                      <p className="text-[#faf9f7] text-xs font-medium">{feature.label}</p>
-                      <p className="text-[#57534e] text-[10px]">{feature.desc}</p>
+                      <p className="text-[#faf9f7] text-xs font-medium">{item.label}</p>
+                      <p className="text-[#57534e] text-[10px]">{item.desc}</p>
                     </div>
                   ))}
                 </div>
@@ -259,61 +223,41 @@ export default function Home() {
           </motion.div>
         )}
 
-        {appState === "camera" && (
-          <CameraCapture
-            onCapture={handleCapture}
-            onClose={() => setAppState("home")}
+        {appState === "capture" && (
+          <MultiAngleCapture
+            key="capture"
+            onCaptureComplete={handleCaptureComplete}
+            onClose={resetApp}
           />
         )}
 
-        {appState === "manual" && (
-          <ManualMeasurement
-            onComplete={handleManualComplete}
-            onClose={() => setAppState("home")}
-          />
-        )}
-
-        {appState === "analyzing" && (
+        {appState === "processing" && (
           <motion.div
-            key="analyzing"
+            key="processing"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex-1 flex flex-col items-center justify-center p-6 bg-[#0f0e0c]"
+            className="flex-1 flex flex-col items-center justify-center px-6"
           >
-            <div className="relative w-32 h-32 mb-10">
-              <div className="absolute inset-0 rounded-full border border-[#c4a77d]/20" />
-              <div className="absolute inset-2 rounded-full border border-[#c4a77d]/30" />
-              <div className="absolute inset-4 rounded-full border border-[#c4a77d]/40" />
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
-                className="absolute inset-0"
-              >
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-[#c4a77d]" />
-              </motion.div>
-              <motion.div
-                animate={{ rotate: -360 }}
-                transition={{ repeat: Infinity, duration: 5, ease: "linear" }}
-                className="absolute inset-4"
-              >
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#d4c4a8]" />
-              </motion.div>
-            </div>
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+              className="w-16 h-16 border-3 border-[#3d3630] border-t-[#c4a77d] rounded-full mb-8"
+            />
 
-            <h2 className="text-xl font-semibold text-[#faf9f7] mb-2">Processing Scan</h2>
-            <p className="text-[#78716c] text-sm text-center max-w-xs">
-              Analyzing body structure and calculating measurements
+            <h2 className="text-xl font-semibold text-[#faf9f7] mb-2">AI Reconstruction</h2>
+            <p className="text-[#78716c] text-sm text-center max-w-xs mb-8">
+              Building 3D mesh and computing measurements...
             </p>
 
-            <div className="mt-10 space-y-3 w-full max-w-xs">
-              {["Detecting landmarks", "Computing proportions", "Generating results"].map(
+            <div className="space-y-3 w-full max-w-xs">
+              {["Photogrammetry processing", "SMPL body fitting", "Computing measurements"].map(
                 (step, index) => (
                   <motion.div
                     key={step}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.4 }}
+                    transition={{ delay: index * 0.5 }}
                     className="flex items-center gap-3 surface-glass rounded-xl px-4 py-3"
                   >
                     <motion.div
@@ -350,15 +294,15 @@ export default function Home() {
                 </motion.button>
 
                 <div className="text-center">
-                  <h1 className="text-base font-medium text-[#faf9f7]">
-                    {analysisResult.isDemo ? "Demo Results" : "Your Measurements"}
-                  </h1>
-                  <p className="text-[#57534e] text-xs">{analysisResult.measurements.length} measurements</p>
+                  <h1 className="text-base font-medium text-[#faf9f7]">Your Measurements</h1>
+                  <p className="text-[#57534e] text-xs">
+                    QC Score: {analysisResult.qcScore}%
+                  </p>
                 </div>
 
                 <motion.button
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setAppState("camera")}
+                  onClick={() => setAppState("capture")}
                   className="w-10 h-10 rounded-full surface-glass flex items-center justify-center"
                 >
                   <svg className="w-5 h-5 text-[#a8a29e]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -377,7 +321,7 @@ export default function Home() {
                   </div>
                 }>
                   <HumanModel
-                    measurements={analysisResult.measurements}
+                    measurements={formattedMeasurements}
                     activeMeasurement={activeMeasurement}
                     onMeasurementComplete={handleMeasurementComplete}
                   />
@@ -390,7 +334,7 @@ export default function Home() {
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                 className="flex-1 px-4 pb-4 space-y-4 -mt-8 relative z-20"
               >
-                {analysisResult.isDemo && (
+                {analysisResult.warnings.length > 0 && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -401,9 +345,9 @@ export default function Home() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                       </svg>
                       <div>
-                        <p className="text-[#c4a77d] text-sm font-medium">Demo Mode</p>
+                        <p className="text-[#c4a77d] text-sm font-medium">Notes</p>
                         <p className="text-[#a8a29e] text-xs mt-0.5">
-                          These are simulated measurements. For accurate results, try again with better lighting or use manual entry.
+                          {analysisResult.warnings.join(". ")}
                         </p>
                       </div>
                     </div>
@@ -411,7 +355,7 @@ export default function Home() {
                 )}
                 
                 <MeasurementProgress
-                  measurements={analysisResult.measurements}
+                  measurements={formattedMeasurements}
                   activeMeasurement={activeMeasurement}
                   completedMeasurements={completedMeasurements}
                 />
@@ -423,34 +367,19 @@ export default function Home() {
                     className="surface-elevated rounded-2xl p-4"
                   >
                     <h3 className="text-[#faf9f7] font-medium mb-3 text-sm">Summary</h3>
-                    <div className="space-y-2">
-                      {analysisResult.recommendations.slice(0, 2).map((rec, index) => (
-                        <p key={index} className="text-[#78716c] text-xs leading-relaxed flex items-start gap-2">
-                          <span className="text-[#c4a77d] mt-0.5">
-                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </span>
-                          {rec}
-                        </p>
-                      ))}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-[#1f1c18]/50 rounded-xl p-3">
+                        <p className="text-[#78716c] text-xs mb-1">Processing Time</p>
+                        <p className="text-[#c4a77d] font-semibold">{(analysisResult.processingTime / 1000).toFixed(1)}s</p>
+                      </div>
+                      <div className="bg-[#1f1c18]/50 rounded-xl p-3">
+                        <p className="text-[#78716c] text-xs mb-1">Confidence</p>
+                        <p className="text-[#c4a77d] font-semibold">{analysisResult.qcScore}%</p>
+                      </div>
                     </div>
                   </motion.div>
                 )}
               </motion.div>
-            </div>
-
-            <div className="safe-area-bottom px-4 pb-4">
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                className="w-full py-4 btn-primary rounded-xl font-medium text-sm flex items-center justify-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                </svg>
-                Export Measurements
-              </motion.button>
             </div>
           </motion.div>
         )}
