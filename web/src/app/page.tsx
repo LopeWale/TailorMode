@@ -179,13 +179,13 @@ export default function Home() {
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="flex flex-col items-center gap-4"
+                className="flex flex-col items-center gap-3"
               >
                 <motion.button
-                  whileHover={{ scale: 1.03, boxShadow: "0 8px 32px rgba(196,167,125,0.3)" }}
+                  whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => setAppState("capture")}
-                  className="px-10 py-4 rounded-2xl font-semibold text-base flex items-center justify-center gap-3 bg-gradient-to-r from-[#c4a77d] to-[#d4b78d] text-[#0a0908] shadow-lg shadow-[#c4a77d]/20 transition-all"
+                  className="liquid-glass-primary px-8 py-3.5 rounded-[20px] font-semibold text-[15px] flex items-center justify-center gap-2.5 text-[#0a0908] transition-all duration-300"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
@@ -194,16 +194,21 @@ export default function Home() {
                   Start 3D Scan
                 </motion.button>
                 
-                <Link 
-                  href="/measure"
-                  className="px-8 py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 bg-[#1f1c18]/80 border border-[#3d3630] text-[#c4a77d] hover:bg-[#2a2520] hover:border-[#c4a77d]/40 active:scale-[0.97] transition-all"
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
-                  </svg>
-                  Tailor Measurements
-                </Link>
+                  <Link 
+                    href="/measure"
+                    className="liquid-glass-secondary px-6 py-3 rounded-[16px] font-medium text-[14px] flex items-center justify-center gap-2 text-[#c4a77d] transition-all duration-300"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
+                    </svg>
+                    Tailor Measurements
+                  </Link>
+                </motion.div>
               </motion.div>
             </div>
 

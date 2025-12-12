@@ -138,6 +138,11 @@ web/
 - No manual measurement entry as primary flow
 
 ## Recent Changes (December 2024)
+- Applied Apple Liquid Glass design to home screen buttons
+- Fixed button width - buttons now auto-size to content instead of full-width
+- Added liquid-glass, liquid-glass-primary, liquid-glass-secondary CSS utility classes
+
+
 - Restructured app based on architecture document requirements
 - Gemini now used correctly as measurement assistant (not image analyzer)
 - Added multi-angle capture flow with height calibration
