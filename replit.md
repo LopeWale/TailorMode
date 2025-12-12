@@ -36,11 +36,14 @@ Gemini is used ONLY as a **measurement assistant for tailors** - NOT for analyzi
 
 ### Completed (Frontend)
 - Multi-angle capture UI with 4-view guidance (MultiAngleCapture.tsx)
-- Height calibration step before capture
+- Interactive scroll wheel height picker with cm/ft-in toggle
 - Camera capture using WebRTC
 - Gemini measurement assistant integration (measurement-service.ts)
 - Updated chat API for NLP measurement requests
 - Removed manual entry as primary flow
+- Three.js 3D mesh viewer with orbit controls and landmarks (MeshViewer.tsx)
+- Measurement assistant chat panel (MeasurementChat.tsx)
+- 3D viewer page at /viewer with mesh visualization and chat
 
 ### Backend Infrastructure Needed
 - **Photogrammetry service**: COLMAP, Meshroom, or cloud API (Polycam, etc.)
@@ -75,8 +78,10 @@ web/
 │   │   ├── layout.tsx
 │   │   └── page.tsx               # Main app with multi-angle capture flow
 │   ├── components/
-│   │   ├── MultiAngleCapture.tsx  # 4-angle guided capture with height calibration
+│   │   ├── MultiAngleCapture.tsx  # 4-angle guided capture with interactive height picker
 │   │   ├── PhotoboothGlassBox.tsx # Glass photobooth with camera reflections (home screen)
+│   │   ├── MeshViewer.tsx         # Three.js 3D body model viewer with landmarks
+│   │   ├── MeasurementChat.tsx    # AI measurement assistant chat panel
 │   │   └── MeasurementProgress.tsx
 │   ├── hooks/
 │   │   └── useCameraFeed.ts       # Camera stream management hook
@@ -118,3 +123,7 @@ web/
 - Replaced HumanModel with PhotoboothGlassBox (glass photobooth with camera reflections)
 - Added useCameraFeed hook for camera stream management
 - Results screen now shows measurement grid with scan summary
+- Added interactive scroll wheel height picker (like iOS picker wheel)
+- Created Three.js MeshViewer component with 3D body model
+- Created MeasurementChat component with Gemini integration
+- Added /viewer page with full tailor dashboard (mesh + measurements + chat)
