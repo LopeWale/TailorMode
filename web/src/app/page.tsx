@@ -179,7 +179,7 @@ export default function Home() {
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="flex flex-col items-center gap-3 mb-16 px-6 w-full max-w-sm"
+                className="flex flex-col items-center gap-3 mb-24 mx-8"
               >
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -213,23 +213,25 @@ export default function Home() {
               initial={{ y: 40, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.7, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="safe-area-bottom px-6 pb-4"
+              className="safe-area-bottom px-6 pb-3"
             >
-              <div className="surface-elevated rounded-2xl p-3">
-                <div className="flex items-center gap-3">
+              <div className="surface-elevated rounded-xl py-2 px-2">
+                <div className="flex items-center justify-between">
                   {[
                     { label: "Multi-Angle", desc: "4 views", icon: "M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" },
                     { label: "AI Reconstruct", desc: "3D mesh", icon: "M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25" },
                     { label: "Measurements", desc: "Precise", icon: "M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
                   ].map((item, index) => (
-                    <div key={index} className="flex-1 text-center">
-                      <div className="w-8 h-8 mx-auto rounded-full bg-[#c4a77d]/10 flex items-center justify-center mb-1.5">
-                        <svg className="w-4 h-4 text-[#c4a77d]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <div key={index} className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-[#c4a77d]/10 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-[#c4a77d]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                           <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                         </svg>
                       </div>
-                      <p className="text-[#faf9f7] text-[11px] font-medium">{item.label}</p>
-                      <p className="text-[#57534e] text-[9px]">{item.desc}</p>
+                      <div>
+                        <p className="text-[#faf9f7] text-[10px] font-medium leading-tight">{item.label}</p>
+                        <p className="text-[#57534e] text-[8px] leading-tight">{item.desc}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
