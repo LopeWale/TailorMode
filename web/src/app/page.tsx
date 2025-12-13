@@ -185,7 +185,7 @@ export default function Home() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => setAppState("capture")}
-                  className="liquid-glass-primary h-14 px-7 rounded-full font-semibold text-[15px] inline-flex items-center gap-2.5 text-[#1a1816] transition-all duration-200"
+                  className="liquid-glass-primary h-14 px-12 rounded-full font-semibold text-[15px] inline-flex items-center gap-2.5 text-[#1a1816] transition-all duration-200"
                 >
                   <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
@@ -198,7 +198,7 @@ export default function Home() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => window.location.href = '/measure'}
-                  className="liquid-glass-secondary h-12 px-6 rounded-full font-medium text-[14px] inline-flex items-center gap-2 text-[#c4a77d] transition-all duration-200"
+                  className="liquid-glass-secondary h-12 px-10 rounded-full font-medium text-[14px] inline-flex items-center gap-2 text-[#c4a77d] transition-all duration-200"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
@@ -215,8 +215,8 @@ export default function Home() {
               transition={{ delay: 0.7, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               className="safe-area-bottom px-6 pb-3 mt-auto"
             >
-              <div className="surface-elevated rounded-xl py-2 px-4">
-                <div className="flex items-center justify-between gap-4">
+              <div className="surface-elevated rounded-xl py-3 px-6">
+                <div className="flex items-center justify-around gap-6">
                   {[
                     { label: "Multi-Angle", desc: "4 views", icon: "M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" },
                     { label: "AI Reconstruct", desc: "3D mesh", icon: "M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25" },
