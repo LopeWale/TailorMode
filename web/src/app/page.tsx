@@ -108,7 +108,7 @@ export default function Home() {
   })) || [];
 
   return (
-    <main className="min-h-screen min-h-dvh flex flex-col bg-[#0f0e0c]">
+    <main className="h-dvh flex flex-col bg-[#0f0e0c]">
       <AnimatePresence mode="wait">
         {appState === "home" && (
           <motion.div
@@ -116,10 +116,10 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex-1 grid grid-rows-[auto_1fr_auto] h-dvh overflow-hidden"
+            className="flex-1 grid grid-rows-[auto_minmax(0,1fr)_auto] h-full overflow-hidden"
           >
             <header className="safe-area-top relative z-10">
-              <div className="flex items-center justify-between px-6 py-4">
+              <div className="flex items-center justify-between px-5 py-3">
                 <div>
                   <h1 className="text-xl font-semibold tracking-tight text-[#faf9f7]">
                     Tailor<span className="text-[#c4a77d]">Mode</span>
@@ -134,12 +134,12 @@ export default function Home() {
               </div>
             </header>
 
-            <div className="flex flex-col items-center justify-center px-6 py-4 gap-4 min-h-0 overflow-hidden">
+            <div className="flex flex-col items-center justify-center px-4 py-3 gap-3 min-h-0 overflow-hidden">
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="relative w-full max-w-[200px] max-h-[35vh] aspect-[3/4]"
+                className="relative w-full max-w-[180px] max-h-[26vh] aspect-[3/4] shrink-0"
               >
                 <div className="absolute inset-0 bg-gradient-radial from-[#c4a77d]/5 via-transparent to-transparent rounded-full blur-3xl" />
                 <Suspense fallback={
@@ -157,10 +157,10 @@ export default function Home() {
                 transition={{ delay: 0.3, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 className="text-center max-w-sm"
               >
-                <h2 className="text-xl sm:text-2xl font-semibold text-[#faf9f7] mb-2 tracking-tight">
+                <h2 className="text-xl font-semibold text-[#faf9f7] mb-1 tracking-tight">
                   3D Body Scanning
                 </h2>
-                <p className="text-[#78716c] text-sm leading-relaxed">
+                <p className="text-[#78716c] text-[13px] leading-snug">
                   Multi-angle capture with AI reconstruction for precise tailoring measurements
                 </p>
               </motion.div>
@@ -179,13 +179,13 @@ export default function Home() {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="flex flex-col items-center gap-3"
+                className="flex flex-col items-center gap-2.5"
               >
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => setAppState("capture")}
-                  className="liquid-glass-primary h-14 px-12 rounded-full font-semibold text-[15px] inline-flex items-center gap-2.5 text-[#1a1816] transition-all duration-200"
+                  className="liquid-glass-primary h-12 px-9 rounded-full font-semibold text-[14px] inline-flex items-center gap-2 text-[#1a1816] transition-all duration-200"
                 >
                   <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
@@ -198,7 +198,7 @@ export default function Home() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => window.location.href = '/measure'}
-                  className="liquid-glass-secondary h-12 px-10 rounded-full font-medium text-[14px] inline-flex items-center gap-2 text-[#c4a77d] transition-all duration-200"
+                  className="liquid-glass-secondary h-11 px-9 rounded-full font-medium text-[13px] inline-flex items-center gap-2 text-[#c4a77d] transition-all duration-200"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
@@ -213,9 +213,9 @@ export default function Home() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.7, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="safe-area-bottom px-4 pb-3"
+              className="safe-area-bottom px-4 pb-2"
             >
-              <div className="surface-elevated rounded-xl py-3 px-6">
+              <div className="surface-elevated rounded-xl py-2.5 px-4">
                 <div className="flex items-center justify-around gap-6">
                   {[
                     { label: "Multi-Angle", desc: "4 views", icon: "M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" },
@@ -223,14 +223,14 @@ export default function Home() {
                     { label: "Measurements", desc: "Precise", icon: "M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
                   ].map((item, index) => (
                     <div key={index} className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-[#c4a77d]/10 flex items-center justify-center flex-shrink-0">
+                      <div className="w-5 h-5 rounded-full bg-[#c4a77d]/10 flex items-center justify-center flex-shrink-0">
                         <svg className="w-3 h-3 text-[#c4a77d]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                           <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                         </svg>
                       </div>
                       <div>
-                        <p className="text-[#faf9f7] text-[10px] font-medium leading-tight">{item.label}</p>
-                        <p className="text-[#57534e] text-[8px] leading-tight">{item.desc}</p>
+                        <p className="text-[#faf9f7] text-[9px] font-medium leading-tight">{item.label}</p>
+                        <p className="text-[#57534e] text-[7px] leading-tight">{item.desc}</p>
                       </div>
                     </div>
                   ))}
