@@ -116,10 +116,10 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex-1 flex flex-col"
+            className="flex-1 grid grid-rows-[auto_1fr_auto] h-dvh overflow-hidden"
           >
             <header className="safe-area-top relative z-10">
-              <div className="flex items-center justify-between px-6 py-5">
+              <div className="flex items-center justify-between px-6 py-4">
                 <div>
                   <h1 className="text-xl font-semibold tracking-tight text-[#faf9f7]">
                     Tailor<span className="text-[#c4a77d]">Mode</span>
@@ -134,12 +134,12 @@ export default function Home() {
               </div>
             </header>
 
-            <div className="flex-1 flex flex-col items-center justify-center px-6 -mt-10">
+            <div className="flex flex-col items-center justify-center px-6 py-4 gap-4 min-h-0 overflow-hidden">
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="relative w-full max-w-[280px] aspect-[3/4] mb-6"
+                className="relative w-full max-w-[200px] max-h-[35vh] aspect-[3/4]"
               >
                 <div className="absolute inset-0 bg-gradient-radial from-[#c4a77d]/5 via-transparent to-transparent rounded-full blur-3xl" />
                 <Suspense fallback={
@@ -152,12 +152,12 @@ export default function Home() {
               </motion.div>
 
               <motion.div
-                initial={{ y: 30, opacity: 0 }}
+                initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="text-center mb-8 max-w-sm"
+                className="text-center max-w-sm"
               >
-                <h2 className="text-2xl sm:text-3xl font-semibold text-[#faf9f7] mb-3 tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-semibold text-[#faf9f7] mb-2 tracking-tight">
                   3D Body Scanning
                 </h2>
                 <p className="text-[#78716c] text-sm leading-relaxed">
@@ -169,17 +169,17 @@ export default function Home() {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mb-6 px-4 py-3 surface-glass rounded-xl border border-red-500/20 max-w-sm w-full"
+                  className="px-4 py-3 surface-glass rounded-xl border border-red-500/20 max-w-sm w-full"
                 >
                   <p className="text-red-400 text-sm text-center">{error}</p>
                 </motion.div>
               )}
 
               <motion.div
-                initial={{ y: 30, opacity: 0 }}
+                initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="flex flex-col items-center gap-3 mb-24 mx-8"
+                className="flex flex-col items-center gap-3"
               >
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -210,10 +210,10 @@ export default function Home() {
             </div>
 
             <motion.div 
-              initial={{ y: 40, opacity: 0 }}
+              initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.7, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="safe-area-bottom px-6 pb-3 mt-auto"
+              className="safe-area-bottom px-4 pb-3"
             >
               <div className="surface-elevated rounded-xl py-3 px-6">
                 <div className="flex items-center justify-around gap-6">
