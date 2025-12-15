@@ -104,7 +104,7 @@ export default function MeasurementChat({ onMeasurementRequest, className }: Mea
       setMessages((prev) => [...prev, assistantMessage]);
 
       if (validatedMeasurements.length > 0 && onMeasurementRequest) {
-        validatedMeasurements.forEach((m) => {
+        validatedMeasurements.forEach((m: { name: string; value: number; unit: string }) => {
           onMeasurementRequest(m);
         });
       }

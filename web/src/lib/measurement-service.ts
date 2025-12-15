@@ -10,11 +10,12 @@ const ai = new GoogleGenAI({
 
 export interface MeasurementDefinition {
   name: string;
-  type: "circumference" | "length" | "distance";
+  type: "circumference" | "length" | "distance" | "limb_circumference";
   landmark_start: string;
   landmark_end: string;
   plane?: string;
   description: string;
+  params?: Record<string, any>;
 }
 
 export interface MeasurementAssistantResponse {
@@ -28,31 +29,35 @@ const MEASUREMENT_DSL_CONTEXT = `
 You are a measurement assistant for TailorMode, a professional tailoring application.
 
 AVAILABLE MEASUREMENT TYPES:
-- circumference: Measure around the body at a specific plane (chest, waist, hip, neck, thigh, bicep)
-- length: Measure along the body between two landmarks (arm length, inseam, torso length)
-- distance: Straight-line distance between two points (shoulder width, hip width)
+- circumference: Measure around the body at a specific landmark plane (chest, waist, hip, neck)
+- limb_circumference: Measure around a limb perpendicular to the bone axis (thigh, bicep, calf)
+- distance: Geodesic distance along the body surface between two points (shoulder width, sleeve length, inseam)
+- straight_distance: Straight-line distance between two points (height)
 
 STANDARD LANDMARKS:
 - Head: crown, forehead, chin, ear_left, ear_right
-- Torso: neck_base, shoulder_left, shoulder_right, chest_center, waist_center, hip_center
+- Torso: neck_base, shoulder_left, shoulder_right, chest_center, waist_center, hip_center, navel
 - Arms: shoulder_point_left, shoulder_point_right, elbow_left, elbow_right, wrist_left, wrist_right
 - Legs: hip_left, hip_right, knee_left, knee_right, ankle_left, ankle_right, crotch, floor
 
-COMMON TAILORING MEASUREMENTS:
+COMMON TAILORING MEASUREMENTS MAPPING:
 - "chest" → circumference at chest_center plane
 - "waist" → circumference at waist_center plane
 - "hips" → circumference at hip_center plane
-- "shoulder width" → distance from shoulder_point_left to shoulder_point_right
-- "arm length" or "sleeve length" → length from shoulder_point to wrist
-- "inseam" → length from crotch to floor (inner leg)
-- "outseam" → length from waist to floor (outer leg)
-- "hollow to hem" → length from neck_base (front) to hem level
-- "back length" → length from neck_base (back) to waist
+- "shoulder width" → distance (geodesic) from shoulder_point_left to shoulder_point_right across back
+- "sleeve length" → distance (geodesic) from shoulder_point to wrist
+- "inseam" → distance (geodesic) from crotch to floor (inner leg)
+- "outseam" → distance (geodesic) from waist_center to floor (outer leg)
+- "hollow to hem" → distance (geodesic) from neck_base (front) to hem level
+- "back length" → distance (geodesic) from neck_base (back) to waist_center
 - "neck" → circumference at neck_base
-- "thigh" → circumference at upper thigh
-- "bicep" → circumference at mid-upper-arm
+- "thigh" → limb_circumference at thigh (between hip and knee, usually top 1/3)
+- "bicep" → limb_circumference at upper arm (between shoulder and elbow, mid point)
 
 When a tailor requests a measurement, map it to the correct type and landmarks.
+For "limb_circumference", you can specify a "fraction" param (0.0 to 1.0) indicating position along the limb (0=start, 1=end). Default is 0.5.
+For "circumference", you can specify a "normal" vector if needed, but usually default [0,1,0] is fine for standing.
+
 If the request is ambiguous, ask for clarification.
 `;
 
@@ -105,8 +110,15 @@ Interpret this measurement request and respond with:
                 landmark_end: { type: Type.STRING },
                 plane: { type: Type.STRING },
                 description: { type: Type.STRING },
+                params: {
+                  type: Type.OBJECT,
+                  properties: {
+                     fraction: { type: Type.NUMBER },
+                     normal: { type: Type.ARRAY, items: { type: Type.NUMBER } }
+                  }
+                },
               },
-              required: ["name", "type", "description"],
+              required: ["name", "type", "description", "landmark_start", "landmark_end"],
             },
           },
           clarification: { type: Type.STRING },
@@ -123,6 +135,46 @@ Interpret this measurement request and respond with:
   }
 
   return JSON.parse(responseText) as MeasurementAssistantResponse;
+}
+
+export async function getMeasurementRequirements(garmentDescription: string): Promise<{
+    explanation: string;
+    requiredMeasurements: string[];
+}> {
+    const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: `You are a professional tailor assistant.
+User wants to make/alter: "${garmentDescription}"
+
+1. List the essential body measurements required for this garment.
+2. Explain briefly WHY each measurement is needed and how it affects the fit.
+3. Provide the response in JSON format.`,
+          },
+        ],
+      },
+    ],
+    config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+                explanation: { type: Type.STRING },
+                requiredMeasurements: { type: Type.ARRAY, items: { type: Type.STRING } }
+            },
+            required: ["explanation", "requiredMeasurements"]
+        }
+    }
+  });
+
+  const responseText = response.text;
+  if (!responseText) throw new Error("Empty response");
+
+  return JSON.parse(responseText);
 }
 
 export async function chatWithMeasurementAssistant(
@@ -159,65 +211,4 @@ Respond helpfully:`,
   });
 
   return response.text || "I'm sorry, I couldn't process that request. Please try again.";
-}
-
-export interface ComputedMeasurement {
-  name: string;
-  value: number;
-  unit: string;
-  confidence: number;
-  type: "circumference" | "length" | "distance";
-  landmarks: { start: string; end: string };
-}
-
-export function computeMeasurementFromMesh(
-  meshData: Float32Array,
-  landmarks: Map<string, [number, number, number]>,
-  definition: MeasurementDefinition
-): ComputedMeasurement {
-  const startPos = landmarks.get(definition.landmark_start);
-  const endPos = landmarks.get(definition.landmark_end);
-
-  if (!startPos || !endPos) {
-    throw new Error(`Landmarks not found: ${definition.landmark_start} or ${definition.landmark_end}`);
-  }
-
-  let value: number;
-  let confidence = 0.9;
-
-  switch (definition.type) {
-    case "distance":
-      const dx = endPos[0] - startPos[0];
-      const dy = endPos[1] - startPos[1];
-      const dz = endPos[2] - startPos[2];
-      value = Math.sqrt(dx * dx + dy * dy + dz * dz) * 100;
-      break;
-
-    case "length":
-      value = Math.abs(endPos[1] - startPos[1]) * 100;
-      confidence = 0.85;
-      break;
-
-    case "circumference":
-      const radius = Math.abs(endPos[0] - startPos[0]) / 2;
-      value = 2 * Math.PI * radius * 100;
-      confidence = 0.8;
-      break;
-
-    default:
-      value = 0;
-      confidence = 0;
-  }
-
-  return {
-    name: definition.name,
-    value: Math.round(value * 10) / 10,
-    unit: "cm",
-    confidence,
-    type: definition.type,
-    landmarks: {
-      start: definition.landmark_start,
-      end: definition.landmark_end,
-    },
-  };
 }

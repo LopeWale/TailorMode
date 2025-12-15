@@ -67,7 +67,7 @@ export async function createCaptureSession(
       organizationId: organization.id,
       clientLabel: input.clientLabel,
       captureMode: input.captureMode,
-      deviceProfile: input.deviceProfile,
+      deviceProfile: input.deviceProfile as any,
       status: CaptureStatus.CREATED,
       captureStartedAt: input.captureStartedAt ?? new Date(),
     },

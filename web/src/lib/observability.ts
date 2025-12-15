@@ -31,7 +31,7 @@ export async function flushPosthogIfNeeded(hasCapturedEvent: boolean) {
     return;
   }
 
-  await client.flushAsync();
+  await client.shutdown();
 }
 
 export function trackCaptureSessionCreated(
