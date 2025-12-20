@@ -67,3 +67,38 @@ export async function computeMeasurementsRemote(
     throw error;
   }
 }
+
+export async function normalizeMeshRemote(
+  meshFilePath: string
+): Promise<{
+  is_watertight: boolean;
+  vertex_count: number;
+  face_count: number;
+  volume: number;
+  bounds: number[][];
+  status: string;
+}> {
+  // Use MeasurementRequest struct even if we don't send measurements, just for mesh_file passing
+  const request = {
+    mesh_file: meshFilePath,
+    landmarks: {},
+    measurements: []
+  };
+
+  try {
+    const response = await fetch(`${GEOMETRY_SERVICE_URL}/normalize`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Geometry Service Normalization Error: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to normalize mesh via geometry service:", error);
+    throw error;
+  }
+}

@@ -46,6 +46,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.26",
+    "inngest": "^3.48.1",
     "lucide-react": "^0.561.0",
     "next": "16.0.0",
     "openid-client": "^6.8.1",

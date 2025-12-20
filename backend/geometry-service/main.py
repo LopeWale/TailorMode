@@ -21,6 +21,47 @@ app.add_middleware(
 async def health_check():
     return {"status": "ok", "service": "geometry-service"}
 
+@app.post("/normalize")
+async def normalize_mesh(request: MeasurementRequest):
+    """
+    Validates and Normalizes the mesh.
+    - Checks for valid mesh data.
+    - Checks for watertightness.
+    - Aligns to Y-up (if needed - placeholder).
+    - Returns metadata (volume, bounding box).
+    """
+    try:
+        # Check if file exists ONLY if it's a local path (not a URL)
+        is_url = request.mesh_file.startswith("http://") or request.mesh_file.startswith("https://")
+        if not is_url and not os.path.exists(request.mesh_file):
+             raise HTTPException(status_code=404, detail=f"Mesh file not found: {request.mesh_file}")
+
+        mesh = trimesh.load(request.mesh_file, file_type="obj" if is_url and request.mesh_file.endswith(".obj") else None)
+        if not isinstance(mesh, trimesh.Trimesh):
+             raise HTTPException(status_code=400, detail="Loaded file is not a valid Trimesh object")
+
+        # Basic Validation
+        is_watertight = mesh.is_watertight
+        volume = mesh.volume if is_watertight else 0.0
+        bounds = mesh.bounds.tolist() # [[min_x, min_y, min_z], [max_x, max_y, max_z]]
+
+        # In a real system, we might rotate/scale and save a new version.
+        # Here we just report status.
+
+        return {
+            "is_watertight": is_watertight,
+            "vertex_count": len(mesh.vertices),
+            "face_count": len(mesh.faces),
+            "volume": volume,
+            "bounds": bounds,
+            "status": "valid" if len(mesh.vertices) > 0 else "invalid"
+        }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/analyze", response_model=List[MeasurementResult])
 async def analyze_mesh(request: MeasurementRequest):
     try:
