@@ -91,3 +91,28 @@ export async function createCaptureSession(
 
   return { session: updatedSession, uploadTarget };
 }
+
+export async function completeCaptureSession(sessionId: string) {
+  const session = await prisma.captureSession.findUnique({
+    where: { id: sessionId },
+  });
+
+  if (!session) {
+    throw new Error(`Session ${sessionId} not found`);
+  }
+
+  if (session.status !== CaptureStatus.CREATED) {
+    // Already completed or processing?
+    return session;
+  }
+
+  // TODO: Verify S3 object exists?
+
+  return prisma.captureSession.update({
+    where: { id: sessionId },
+    data: {
+      status: CaptureStatus.UPLOADED,
+      captureCompletedAt: new Date(),
+    },
+  });
+}

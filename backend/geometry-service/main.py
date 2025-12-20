@@ -24,10 +24,13 @@ async def health_check():
 @app.post("/analyze", response_model=List[MeasurementResult])
 async def analyze_mesh(request: MeasurementRequest):
     try:
-        if not os.path.exists(request.mesh_file):
+        # Check if file exists ONLY if it's a local path (not a URL)
+        is_url = request.mesh_file.startswith("http://") or request.mesh_file.startswith("https://")
+        if not is_url and not os.path.exists(request.mesh_file):
              raise HTTPException(status_code=404, detail=f"Mesh file not found: {request.mesh_file}")
 
-        mesh = trimesh.load(request.mesh_file)
+        # trimesh.load handles URLs automatically if requests is installed
+        mesh = trimesh.load(request.mesh_file, file_type="obj" if is_url and request.mesh_file.endswith(".obj") else None)
         if not isinstance(mesh, trimesh.Trimesh):
              raise HTTPException(status_code=400, detail="Loaded file is not a valid Trimesh object")
 

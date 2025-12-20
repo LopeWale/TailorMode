@@ -1,4 +1,4 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import crypto from "node:crypto";
 
@@ -75,4 +75,14 @@ export async function createCaptureUploadTarget(options: {
       "Content-Type": contentType,
     },
   };
+}
+
+export async function getCaptureDownloadUrl(key: string): Promise<string> {
+  const client = getS3Client();
+  const command = new GetObjectCommand({
+    Bucket: env.captureUploadBucket,
+    Key: key,
+  });
+
+  return getSignedUrl(client, command, { expiresIn: 3600 });
 }

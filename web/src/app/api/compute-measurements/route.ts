@@ -9,6 +9,8 @@ import {
   computeMeasurementsRemote
 } from "@/lib/geometry-client";
 import { MeasurementDefinition as ClientDefinition } from "@/lib/measurement-service";
+import { getCaptureDownloadUrl } from "@/lib/storage";
+import { prisma } from "@/lib/prisma";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
@@ -30,10 +32,12 @@ interface LandmarkData {
 
 export async function POST(request: NextRequest) {
   let tempFilePath: string | null = null;
+  let remoteMeshUrl: string | null = null;
 
   try {
     const body = await request.json();
     const { 
+      sessionId,
       meshData, 
       landmarks: landmarksInput,
       measurementIds,
@@ -80,35 +84,48 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    // Save Mesh to Temp File
-    if (!meshData || !meshData.vertices || !meshData.indices) {
+    // Handle Mesh Source (Session ID vs Raw Data)
+    if (sessionId) {
+      const session = await prisma.captureSession.findUnique({
+        where: { id: sessionId },
+      });
+
+      if (!session || !session.uploadObjectKey) {
+        return NextResponse.json(
+          { error: "Session not found or has no uploaded mesh" },
+          { status: 404 }
+        );
+      }
+
+      remoteMeshUrl = await getCaptureDownloadUrl(session.uploadObjectKey);
+    } else if (meshData && meshData.vertices && meshData.indices) {
+      const tempDir = os.tmpdir();
+      tempFilePath = path.join(tempDir, `mesh-${uuidv4()}.obj`);
+
+      // Create OBJ content
+      // v x y z
+      // f v1 v2 v3
+      let objContent = "";
+      const vertices = meshData.vertices;
+      const indices = meshData.indices;
+      const scale = meshData.scale || 1.0;
+
+      for (let i = 0; i < vertices.length; i += 3) {
+        objContent += `v ${vertices[i] * scale} ${vertices[i+1] * scale} ${vertices[i+2] * scale}\n`;
+      }
+
+      for (let i = 0; i < indices.length; i += 3) {
+        // OBJ indices are 1-based
+        objContent += `f ${indices[i] + 1} ${indices[i+1] + 1} ${indices[i+2] + 1}\n`;
+      }
+
+      await fs.writeFile(tempFilePath, objContent);
+    } else {
          return NextResponse.json(
-            { error: "Mesh data (vertices/indices) is required" },
+            { error: "Either sessionId or meshData (vertices/indices) is required" },
             { status: 400 }
         );
     }
-
-    const tempDir = os.tmpdir();
-    tempFilePath = path.join(tempDir, `mesh-${uuidv4()}.obj`);
-
-    // Create OBJ content
-    // v x y z
-    // f v1 v2 v3
-    let objContent = "";
-    const vertices = meshData.vertices;
-    const indices = meshData.indices;
-    const scale = meshData.scale || 1.0;
-
-    for (let i = 0; i < vertices.length; i += 3) {
-      objContent += `v ${vertices[i] * scale} ${vertices[i+1] * scale} ${vertices[i+2] * scale}\n`;
-    }
-    
-    for (let i = 0; i < indices.length; i += 3) {
-      // OBJ indices are 1-based
-      objContent += `f ${indices[i] + 1} ${indices[i+1] + 1} ${indices[i+2] + 1}\n`;
-    }
-
-    await fs.writeFile(tempFilePath, objContent);
 
     // Prepare Definitions for Client
     const clientDefinitions: ClientDefinition[] = definitions.map(d => ({
@@ -121,8 +138,12 @@ export async function POST(request: NextRequest) {
     }));
 
     // Call Python Service
+    // If remoteMeshUrl is present, pass it. Otherwise use tempFilePath.
+    const meshSource = remoteMeshUrl || tempFilePath;
+    if (!meshSource) throw new Error("No mesh source available");
+
     const computedResults = await computeMeasurementsRemote(
-        tempFilePath,
+        meshSource,
         landmarksForService,
         clientDefinitions
     );
@@ -140,11 +161,11 @@ export async function POST(request: NextRequest) {
 
     definitions.forEach((def, index) => {
         const computed = computedResults[index];
-        const prevRes = prevResultsMap.get(def.id) || {
+        const prevRes = (prevResultsMap.get(def.id) || {
             measurementId: def.id,
             captureAttempts: 0,
             status: "pending"
-        };
+        }) as MeasurementResult;
 
         const newResult: MeasurementResult = {
             measurementId: def.id,
