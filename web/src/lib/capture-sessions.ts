@@ -67,7 +67,7 @@ export async function createCaptureSession(
       organizationId: organization.id,
       clientLabel: input.clientLabel,
       captureMode: input.captureMode,
-      deviceProfile: input.deviceProfile,
+      deviceProfile: input.deviceProfile as any,
       status: CaptureStatus.CREATED,
       captureStartedAt: input.captureStartedAt ?? new Date(),
     },
@@ -90,4 +90,29 @@ export async function createCaptureSession(
   });
 
   return { session: updatedSession, uploadTarget };
+}
+
+export async function completeCaptureSession(sessionId: string) {
+  const session = await prisma.captureSession.findUnique({
+    where: { id: sessionId },
+  });
+
+  if (!session) {
+    throw new Error(`Session ${sessionId} not found`);
+  }
+
+  if (session.status !== CaptureStatus.CREATED) {
+    // Already completed or processing?
+    return session;
+  }
+
+  // TODO: Verify S3 object exists?
+
+  return prisma.captureSession.update({
+    where: { id: sessionId },
+    data: {
+      status: CaptureStatus.UPLOADED,
+      captureCompletedAt: new Date(),
+    },
+  });
 }
